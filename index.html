@@ -6,663 +6,127 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f7f1e8">
 <title>北區學生一週聚會安排</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
-
 <style>
-:root{
-  --bg:#f7f1e8;
-  --paper:#fffdf9;
-  --ink:#3e342b;
-  --muted:#887b6d;
-  --line:#e5dacb;
-  --accent:#87684a;
-  --soft:#f0e6d9;
-  --danger:#a33;
-}
-
-body[data-theme="night"]{
-  --bg:#17191f;
-  --paper:#22252d;
-  --ink:#eee8df;
-  --muted:#b3a89a;
-  --line:#41434b;
-  --accent:#c49a70;
-  --soft:#30313a;
-  --danger:#ff9a9a;
-}
-
+:root{--bg:#f7f1e8;--paper:#fffdf9;--ink:#3e342b;--muted:#887b6d;--line:#e5dacb;--accent:#87684a;--soft:#f0e6d9;--danger:#a33}
+body[data-theme=night]{--bg:#17191f;--paper:#22252d;--ink:#eee8df;--muted:#b3a89a;--line:#41434b;--accent:#c49a70;--soft:#30313a;--danger:#ff9a9a}
 *{box-sizing:border-box}
-
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--ink);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  line-height:1.5;
-}
-
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}
 button,input,select,textarea{font:inherit}
-
-button{
-  cursor:pointer;
-  touch-action:manipulation;
-  border:1px solid var(--line);
-  border-radius:9px;
-  padding:8px 12px;
-  background:var(--paper);
-  color:var(--ink);
-  font-weight:650;
-}
-
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-#calendarBtn:focus-visible{
-  outline:2px solid var(--accent);
-  outline-offset:2px;
-}
-
-button:disabled{
-  opacity:.55;
-  cursor:not-allowed;
-}
-
-.app{
-  max-width:1100px;
-  margin:auto;
-  padding:clamp(12px,3vw,28px);
-}
-
-/* 頂部標題 */
-
-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:12px;
-  margin-bottom:4px;
-}
-
-.brand{
-  font-size:.7rem;
-  letter-spacing:.1em;
-  color:var(--accent);
-  font-weight:800;
-}
-
-h1{
-  font-size:clamp(1.5rem,4vw,2.3rem);
-  line-height:1.2;
-  margin:4px 0 0;
-}
-
+button{cursor:pointer;touch-action:manipulation;border:1px solid var(--line);border-radius:9px;padding:8px 12px;background:var(--paper);color:var(--ink);font-weight:650}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{max-width:1100px;margin:auto;padding:clamp(12px,3vw,28px)}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:4px}
+.brand{font-size:.7rem;letter-spacing:.1em;color:var(--accent);font-weight:800}
+h1{font-size:clamp(1.5rem,4vw,2.3rem);line-height:1.2;margin:4px 0 0}
 h2{font-size:1.2rem;margin:0}
-h3{font-size:1.05rem}
-
-/* 右上角四個按鈕 */
-
-.actions{
-  display:grid;
-  grid-template-columns:44px 44px;
-  grid-template-rows:44px 44px;
-  gap:8px;
-  align-items:center;
-  flex-shrink:0;
-}
-
-#themeBtn{
-  grid-column:1;
-  grid-row:1;
-}
-
-#refreshBtn{
-  grid-column:2;
-  grid-row:1;
-}
-
-#calendarBtn{
-  grid-column:1;
-  grid-row:2;
-}
-
-#loginBtn{
-  grid-column:2;
-  grid-row:2;
-}
-
-#refreshBtn,
-#themeBtn,
-#loginBtn,
-#calendarBtn{
-  width:44px;
-  height:44px;
-  padding:0;
-  display:inline-flex;
-  justify-content:center;
-  align-items:center;
-  border-radius:10px;
-}
-
-#calendarBtn{
-  text-decoration:none;
-  background:var(--paper);
-  color:var(--ink);
-  border:1px solid var(--line);
-}
-
-#refreshBtn svg,
-#themeBtn svg,
-#loginBtn svg,
-#calendarBtn svg{
-  width:23px;
-  height:23px;
-}
-
-#refreshBtn.loading svg{
-  animation:refresh-spin .8s linear infinite;
-}
-
-@keyframes refresh-spin{
-  to{transform:rotate(360deg)}
-}
-
-@media(prefers-reduced-motion:reduce){
-  #refreshBtn.loading svg{animation:none}
-}
-
-.primary{
-  background:var(--accent);
-  color:white;
-  border-color:var(--accent);
-}
-
+.actions{display:grid;grid-template-columns:44px 44px;gap:6px;align-items:center}
+#refreshBtn,#themeBtn,#calendarBtn,#loginBtn{width:44px;height:44px;padding:0;display:inline-flex;justify-content:center;align-items:center;border-radius:10px}
+#refreshBtn svg,#themeBtn svg,#calendarBtn svg,#loginBtn svg{width:23px;height:23px}
+#refreshBtn:hover,#themeBtn:hover,#calendarBtn:hover,#loginBtn:hover{border-color:var(--accent)}
+#refreshBtn.loading svg{animation:refresh-spin .8s linear infinite}
+#refreshBtn:disabled{cursor:wait;opacity:.65}
+@keyframes refresh-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){#refreshBtn.loading svg{animation:none}}
+.primary{background:var(--accent);color:white;border-color:var(--accent)}
 .danger{color:var(--danger)}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:15px;padding:clamp(14px,2.5vw,22px);margin:14px 0;box-shadow:0 8px 26px #5d47210d}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.muted{color:var(--muted);font-size:.88rem}
+.notice{padding:12px;border-radius:10px;background:var(--soft);color:var(--muted);font-size:.9rem}
+.filters{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+.filter{display:inline-flex;align-items:center;gap:5px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 9px;font-size:.82rem}
+ .filter input{accent-color:var(--cat-color,var(--accent));margin:0;width:auto}
+.filter{background:var(--cat-bg,var(--paper));border-color:var(--cat-color,var(--line));color:#423a30}
+.filter:has(input:not(:checked)){opacity:.48}
+body[data-theme=night] .filter{color:#302820}
+#calendarBtn{border:1px solid var(--line);background:var(--paper);color:var(--ink);text-decoration:none}
 
-/* 狀態及面板 */
-
-#globalStatus{
-  margin:0 0 4px;
-  min-height:0;
-  font-size:.78rem;
-}
-
-#globalStatus:empty{display:none}
-
-.panel{
-  background:var(--paper);
-  border:1px solid var(--line);
-  border-radius:15px;
-  padding:clamp(14px,2.5vw,22px);
-  margin:14px 0;
-  box-shadow:0 8px 26px #5d47210d;
-}
-
-.app > section.panel:first-of-type{
-  margin-top:4px;
-}
-
-.panel-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:12px;
-}
-
-.muted{
-  color:var(--muted);
-  font-size:.88rem;
-}
-
-.notice{
-  padding:12px;
-  border-radius:10px;
-  background:var(--soft);
-  color:var(--muted);
-  font-size:.9rem;
-}
-
-/* 分類篩選 */
-
-.filters{
-  display:flex;
-  flex-wrap:wrap;
-  gap:7px;
-  margin:12px 0;
-}
-
-.filter{
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  background:var(--paper);
-  border:1px solid var(--line);
-  border-radius:999px;
-  padding:6px 9px;
-  font-size:.82rem;
-}
-
-.filter input{
-  accent-color:var(--accent);
-  margin:0;
-  width:auto;
-}
-
-/* 一週聚會 */
-
-.weekly-table{
-  width:100%;
-  border-collapse:separate;
-  border-spacing:0;
-  border:1px solid var(--line);
-  border-radius:10px;
-  overflow:hidden;
-}
-
-.weekly-table th,
-.weekly-table td{
-  text-align:left;
-  padding:10px 12px;
-  border-bottom:1px solid var(--line);
-  vertical-align:top;
-}
-
-.weekly-table th{
-  background:var(--soft);
-  font-weight:750;
-}
-
-.weekly-table tr:last-child td{
-  border-bottom:0;
-}
-
-.weekday{
-  white-space:nowrap;
-  font-weight:750;
-  width:105px;
-}
-
-.weekly-events{
-  display:flex;
-  flex-direction:column;
-  gap:0;
-}
-
-.event-line{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  gap:0;
-  padding:8px 0;
-  border-bottom:1px dashed var(--line);
-  min-height:0;
-}
-
-.event-line:first-child{padding-top:0}
-
-.event-line:last-child{
-  padding-bottom:0;
-  border-bottom:0;
-}
-
-.event-heading{
-  display:flex;
-  align-items:baseline;
-  flex-wrap:wrap;
-  gap:5px 7px;
-  line-height:1.45;
-}
-
-.event-title{
-  font-weight:750;
-  overflow-wrap:anywhere;
-}
-
-.tag{
-  display:inline-block;
-  font-size:.75rem;
-  background:var(--soft);
-  border-radius:999px;
-  padding:2px 7px;
-  line-height:1.4;
-}
-
-.event-meta{
-  font-size:.85rem;
-  color:var(--muted);
-  margin-top:4px;
-  line-height:1.45;
-  overflow-wrap:anywhere;
-}
-
-.event-notes{
-  margin-top:4px;
-  line-height:1.5;
-  white-space:pre-wrap;
-  overflow-wrap:anywhere;
-}
-
-/* 每月特別通告 */
-
-#announcements{
-  display:flex;
-  flex-direction:column;
-  gap:9px;
-}
-
-.announcement{
-  display:flex;
-  flex-direction:column;
-  align-items:stretch;
-  gap:0;
-  height:auto;
-  min-height:0;
-  padding:12px 14px;
-  margin:0;
-  border:1px solid var(--line);
-  border-radius:11px;
-  background:var(--paper);
-}
-
-.announcement h3{
-  margin:0;
-  padding:0;
-  font-size:1.05rem;
-  line-height:1.4;
-}
-
-.announcement-meta{
-  margin-top:5px;
-  font-size:.87rem;
-  color:var(--muted);
-  line-height:1.45;
-  overflow-wrap:anywhere;
-}
-
-.announcement-category{margin-top:6px}
-
-.announcement-content{
-  margin-top:6px;
-  white-space:pre-wrap;
-  overflow-wrap:anywhere;
-  line-height:1.5;
-}
-
-.empty{
-  color:var(--muted);
-  padding:10px 0;
-}
-
-/* 管理員介面 */
-
+table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--soft);font-weight:750}
+tr:last-child td{border-bottom:0}
+.weekday{white-space:nowrap;font-weight:750;width:105px}
+.event-line{padding:9px 0;border-bottom:1px dashed var(--line)}
+.event-line:last-child{border-bottom:0}
+.event-title{font-weight:750;overflow-wrap:anywhere}
+.tag{display:inline-block;font-size:.75rem;background:var(--cat-bg,var(--soft));border:1px solid var(--cat-color,var(--line));color:#423a30;border-radius:999px;padding:2px 7px;margin-right:6px}
+.event-meta{font-size:.85rem;color:var(--muted);margin-top:3px;white-space:pre-wrap;overflow-wrap:anywhere}
+.announcement{border:1px solid var(--line);border-radius:11px;padding:13px;margin:9px 0}
+.announcement h3{margin:0 0 5px;font-size:1.05rem}
+.announcement-content{white-space:pre-wrap;overflow-wrap:anywhere}
+.empty{color:var(--muted);padding:16px 0}
 .admin-panel,.login-box{display:none}
 .admin-panel.open,.login-box.open{display:block}
-
-form{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:12px;
-}
-
-label{
-  display:grid;
-  gap:5px;
-  font-size:.88rem;
-  font-weight:650;
-}
-
-input,select,textarea{
-  width:100%;
-  min-width:0;
-  padding:9px 10px;
-  border:1px solid var(--line);
-  border-radius:8px;
-  background:var(--bg);
-  color:var(--ink);
-}
-
-textarea{
-  min-height:90px;
-  resize:vertical;
-}
-
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{display:grid;gap:5px;font-size:.88rem;font-weight:650}
+input,select,textarea{width:100%;min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+textarea{min-height:90px;resize:vertical}
 .full,.form-actions{grid-column:1/-1}
-
-.form-actions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
-
-.status{
-  font-size:.85rem;
-  color:var(--muted);
-  min-height:1.4em;
-  margin:8px 0;
-  overflow-wrap:anywhere;
-}
-
+.form-actions{display:flex;gap:8px;flex-wrap:wrap}
+.status{font-size:.85rem;color:var(--muted);min-height:1.4em;margin:4px 0;overflow-wrap:anywhere}
 .status.error{color:var(--danger)}
-
-.admin-list-item{
-  display:flex;
-  justify-content:space-between;
-  gap:12px;
-  align-items:flex-start;
-  border-top:1px solid var(--line);
-  padding:10px 0;
-}
-
-.admin-list-item>div:first-child{
-  min-width:0;
-  overflow-wrap:anywhere;
-}
-
-.small-actions{
-  display:flex;
-  gap:6px;
-  flex-shrink:0;
-}
-
-/* 通告拖曳排序 */
-
-.sortable-list{margin-top:10px}
-
-.sortable-item{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:12px 0;
-  border-top:1px solid var(--line);
-  background:var(--paper);
-}
-
-.sortable-info{
-  flex:1;
-  min-width:0;
-  overflow-wrap:anywhere;
-}
-
-.drag-handle{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  width:36px;
-  min-width:36px;
-  height:40px;
-  padding:0;
-  border:0;
-  background:transparent;
-  color:var(--accent);
-  cursor:grab;
-  touch-action:none;
-  user-select:none;
-  font-size:25px;
-  line-height:1;
-}
-
+.admin-list-item{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-top:1px solid var(--line);padding:10px 0}
+.admin-list-item>div:first-child{min-width:0;overflow-wrap:anywhere}
+.small-actions{display:flex;gap:6px;flex-shrink:0}
+.drag-handle{display:inline-flex;align-items:center;justify-content:center;width:32px;height:34px;padding:0;margin-right:7px;border:1px solid var(--line);border-radius:8px;color:var(--muted);cursor:grab;touch-action:none;user-select:none;font-size:1.15rem;line-height:1}
 .drag-handle:active{cursor:grabbing}
-
-.sortable-ghost{
-  opacity:.35;
-  background:var(--soft);
-}
-
-.sortable-chosen{
-  background:var(--soft);
-  border-radius:8px;
-}
-
-.sortable-drag{
-  background:var(--paper);
-  border:1px solid var(--accent);
-  border-radius:8px;
-  box-shadow:0 8px 20px #0002;
-}
-
-.sortable-saving{
-  opacity:.6;
-  pointer-events:none;
-}
-
-.sort-hint{
-  margin:8px 0;
-  color:var(--muted);
-  font-size:.85rem;
-}
-
-footer{
-  text-align:center;
-  color:var(--muted);
-  font-size:.78rem;
-  padding:18px;
-}
-
-/* 手機版 */
-
+.sortable-ghost{opacity:.35;background:var(--soft)}
+.sortable-chosen{border-radius:9px}
+.sortable-drag{box-shadow:0 8px 24px #0002}
+footer{text-align:center;color:var(--muted);font-size:.78rem;padding:18px}
 @media(max-width:620px){
-  header{
-    align-items:flex-start;
-    margin-bottom:2px;
-  }
-
-  .actions{gap:6px}
-
-  #globalStatus{margin-bottom:3px}
-
-  .app > section.panel:first-of-type{
-    margin-top:3px;
-  }
-
-  form{grid-template-columns:1fr}
-  .full,.form-actions{grid-column:1}
-  .weekday{width:78px}
-
-  .weekly-table th,
-  .weekly-table td{
-    padding:8px;
-    font-size:.9rem;
-  }
-
-  .panel{padding:12px}
-  .admin-list-item{flex-direction:column}
-  .small-actions{align-self:flex-end}
-  .sortable-item{flex-wrap:wrap;gap:8px}
-  .sortable-item .small-actions{margin-left:auto}
-  .announcement{padding:11px 12px}
+ header{align-items:flex-start;flex-direction:row}
+ .actions{gap:6px}
+ form{grid-template-columns:1fr}
+ .full,.form-actions{grid-column:1}
+ .weekday{width:78px}
+ th,td{padding:8px;font-size:.9rem}
+ .panel{padding:12px}
+ .admin-list-item{flex-direction:column}
+ .small-actions{align-self:flex-end}
 }
 </style>
 </head>
-
 <body>
 <div class="app">
-
 <header>
   <div>
-    <div class="brand">
-      THE CHURCH OF GOD IN HONG KONG
-    </div>
+    <div class="brand">THE CHURCH OF GOD IN HONG KONG</div>
     <h1>北區學生一週聚會安排</h1>
   </div>
-
   <div class="actions">
-
-    <!-- 重新整理 -->
-    <button id="refreshBtn" type="button"
-      aria-label="重新整理資料"
-      title="重新整理資料">
-      <svg viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="1.8"
-        stroke-linecap="round" stroke-linejoin="round">
+    <button id="refreshBtn" type="button" aria-label="重新整理資料" title="重新整理資料">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M20 7v5h-5"></path>
         <path d="M4 17v-5h5"></path>
         <path d="M5.6 9a7 7 0 0 1 11.6-2L20 12"></path>
         <path d="M4 12l2.8 5a7 7 0 0 0 11.6-2"></path>
       </svg>
     </button>
-
-    <!-- 日夜模式 -->
-    <button id="themeBtn" type="button"
-      aria-label="切換夜間模式"
-      title="切換夜間模式">
-      <svg id="themeIcon" viewBox="0 0 24 24"
-        fill="none" stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"></svg>
+    <button id="themeBtn" type="button" aria-label="切換夜間模式" title="切換夜間模式">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
     </button>
-
-    <!-- 教會月曆 -->
-    <a
-      id="calendarBtn"
-      href="https://tawuahc-oss.github.io/church-calendar/"
-      title="前往教會月曆"
-      aria-label="前往教會月曆"
-    >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <rect x="3" y="5" width="18" height="16" rx="2"></rect>
-        <path d="M7 3v4 M17 3v4 M3 10h18"></path>
-        <path d="M8 14h2 M14 14h2 M8 18h2"></path>
+    <a id="calendarBtn" href="https://tawuahc-oss.github.io/nds-cal/" title="前往教會月曆" aria-label="前往教會月曆">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M7 3v4 M17 3v4 M3 10h18 M8 14h2 M14 14h2 M8 18h2"></path>
       </svg>
     </a>
-
-    <!-- 管理員登入 -->
-    <button id="loginBtn" type="button"
-      aria-label="管理員登入"
-      title="管理員登入">
-      <svg viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="1.8"
-        stroke-linecap="round" stroke-linejoin="round">
+    <button id="loginBtn" type="button" aria-label="管理員登入" title="管理員登入">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="8" cy="15" r="5"></circle>
         <path d="m11.5 11.5 8-8 2 2-2 2 1.5 1.5-2.5 2.5L17 10.5l-2 2"></path>
       </svg>
     </button>
-
   </div>
 </header>
 
-<div id="globalStatus" class="status"
-  role="status" aria-live="polite"></div>
+<div id="globalStatus" class="status" role="status" aria-live="polite"></div>
 
 <section class="panel">
-  <div class="panel-head">
-    <h2>每月特別通告</h2>
-  </div>
-
-  <div id="announcements">
-    <div class="empty">正在載入通告……</div>
-  </div>
+  <div class="panel-head"><h2>每月特別通告</h2></div>
+  <div id="announcements"><div class="empty">正在載入通告……</div></div>
 </section>
 
 <section class="panel">
@@ -670,22 +134,11 @@ footer{
     <h2>一週聚會恆常安排</h2>
     <span class="muted">按分類篩選</span>
   </div>
-
   <div id="categoryFilters" class="filters"></div>
-
   <div style="overflow-x:auto">
-    <table class="weekly-table">
-      <thead>
-        <tr>
-          <th>星期</th>
-          <th>聚會詳情</th>
-        </tr>
-      </thead>
-      <tbody id="weeklyBody">
-        <tr>
-          <td colspan="2">正在載入聚會……</td>
-        </tr>
-      </tbody>
+    <table>
+      <thead><tr><th>星期</th><th>聚會詳情</th></tr></thead>
+      <tbody id="weeklyBody"><tr><td colspan="2">正在載入聚會……</td></tr></tbody>
     </table>
   </div>
 </section>
@@ -695,28 +148,16 @@ footer{
     <h2>管理員登入</h2>
     <button id="closeLogin" type="button">關閉</button>
   </div>
-
   <form id="loginForm">
-    <label class="full">
-      使用者名稱
-      <input id="loginUsername"
-        autocomplete="username" required>
+    <label class="full">使用者名稱
+      <input id="loginUsername" autocomplete="username" required>
     </label>
-
-    <label class="full">
-      密碼
-      <input id="loginPassword"
-        type="password"
-        autocomplete="current-password" required>
+    <label class="full">密碼
+      <input id="loginPassword" type="password" autocomplete="current-password" required>
     </label>
-
-    <div class="form-actions">
-      <button class="primary" type="submit">登入</button>
-    </div>
+    <div class="form-actions"><button class="primary" type="submit">登入</button></div>
   </form>
-
-  <div id="loginStatus" class="status"
-    role="status" aria-live="polite"></div>
+  <div id="loginStatus" class="status" role="status" aria-live="polite"></div>
 </section>
 
 <section id="adminPanel" class="panel admin-panel">
@@ -724,22 +165,13 @@ footer{
     <h2>管理員編輯區</h2>
     <button id="logoutBtn" type="button">登出</button>
   </div>
-
-  <div class="notice">
-    可以新增、編輯、刪除聚會及通告。
-    特別通告可拖曳排序，並自動儲存。
-  </div>
+  <div class="notice">新增、編輯或刪除資料後，公眾頁面會讀取資料庫中的最新內容。</div>
 
   <section class="panel">
-    <h2 style="margin-bottom:12px">
-      編輯每週固定聚會
-    </h2>
-
+    <h2 style="margin-bottom:12px">編輯每週固定聚會</h2>
     <form id="weeklyForm">
       <input type="hidden" id="weeklyId">
-
-      <label>
-        星期
+      <label>星期
         <select id="weekday">
           <option value="0">星期日</option>
           <option value="1">星期一</option>
@@ -750,131 +182,39 @@ footer{
           <option value="6">星期六</option>
         </select>
       </label>
-
-      <label>
-        分類
-        <select id="weeklyCategory"></select>
-      </label>
-
-      <label class="full">
-        聚會名稱
-        <input id="weeklyTitle" required maxlength="160">
-      </label>
-
-      <label>
-        開始時間
-        <input id="weeklyStart" type="time">
-      </label>
-
-      <label>
-        結束時間
-        <input id="weeklyEnd" type="time">
-      </label>
-
-      <label>
-        地點
-        <input id="weeklyLocation" maxlength="200">
-      </label>
-
-      <label>
-        聯絡人
-        <input id="weeklyContact" maxlength="120">
-      </label>
-
-      <label class="full">
-        補充資料
-        <textarea id="weeklyNotes" maxlength="2000"></textarea>
-      </label>
-
+      <label>分類<select id="weeklyCategory"></select></label>
+      <label class="full">聚會名稱<input id="weeklyTitle" required maxlength="160"></label>
+      <label>開始時間<input id="weeklyStart" type="time"></label>
+      <label>結束時間<input id="weeklyEnd" type="time"></label>
+      <label>地點<input id="weeklyLocation" maxlength="200"></label>
+      <label>聯絡人<input id="weeklyContact" maxlength="120"></label>
+      <label class="full">補充資料<textarea id="weeklyNotes" maxlength="2000"></textarea></label>
       <div class="form-actions">
-        <button class="primary" type="submit">
-          儲存聚會
-        </button>
-        <button type="button" id="weeklyReset">
-          清除表格
-        </button>
+        <button class="primary" type="submit">儲存聚會</button>
+        <button type="button" id="weeklyReset">清除表格</button>
       </div>
     </form>
-
     <div id="weeklyAdminList"></div>
   </section>
 
   <section class="panel">
-    <h2 style="margin-bottom:12px">
-      編輯每月特別通告
-    </h2>
-
+    <h2 style="margin-bottom:12px">編輯每月特別通告</h2>
     <form id="announcementForm">
       <input type="hidden" id="announcementId">
-
-      <label class="full">
-        通告標題
-        <input id="announcementTitle"
-          required maxlength="180">
-      </label>
-
-      <label>
-        開始日期
-        <input id="announcementStartDate"
-          type="date" required>
-      </label>
-
-      <label>
-        結束日期（可留空）
-        <input id="announcementEndDate" type="date">
-      </label>
-
-      <label>
-        分類（可留空）
-        <select id="announcementCategory"></select>
-      </label>
-
-      <label>
-        開始時間
-        <input id="announcementStart" type="time">
-      </label>
-
-      <label>
-        結束時間
-        <input id="announcementEnd" type="time">
-      </label>
-
-      <label class="full">
-        地點
-        <input id="announcementLocation"
-          maxlength="200">
-      </label>
-
-      <label class="full">
-        通告內容
-        <textarea id="announcementContent"
-          maxlength="5000"></textarea>
-      </label>
-
+      <label class="full">通告標題<input id="announcementTitle" required maxlength="180"></label>
+      <label>開始日期<input id="announcementStartDate" type="date" required></label>
+      <label>結束日期（可留空）<input id="announcementEndDate" type="date"></label>
+      <label>分類（可留空）<select id="announcementCategory"></select></label>
+      <label>開始時間<input id="announcementStart" type="time"></label>
+      <label>結束時間<input id="announcementEnd" type="time"></label>
+      <label class="full">地點<input id="announcementLocation" maxlength="200"></label>
+      <label class="full">通告內容<textarea id="announcementContent" maxlength="5000"></textarea></label>
       <div class="form-actions">
-        <button class="primary" type="submit">
-          儲存通告
-        </button>
-        <button type="button" id="announcementReset">
-          清除表格
-        </button>
+        <button class="primary" type="submit">儲存通告</button>
+        <button type="button" id="announcementReset">清除表格</button>
       </div>
     </form>
-
-    <h3 style="margin-bottom:4px">
-      現有特別通告
-    </h3>
-
-    <div class="sort-hint">
-      按住左側 ⠿ 圖示，上下拖曳通告調整次序。
-      放開後自動儲存。
-    </div>
-
-    <div id="sortStatus" class="status"
-      role="status" aria-live="polite"></div>
-
-    <div id="announcementAdminList"
-      class="sortable-list"></div>
+    <div id="announcementAdminList"></div>
   </section>
 </section>
 
@@ -882,1019 +222,296 @@ footer{
 </div>
 
 <script>
-/* Supabase 設定 */
-
-const SUPABASE_URL =
-  "https://ozoelkflqwwwypunrori.supabase.co";
-
-const SUPABASE_PUBLISHABLE_KEY =
-  "sb_publishable_2deqpMt-JEPIlHmimCXHYg_hXWpRlqb";
-
+/* 請填回你已使用的 Supabase 設定，不要使用 sb_secret_ 或 service_role key。 */
+const SUPABASE_URL = "https://ozoelkflqwwwypunrori.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_2deqpMt-JEPIlHmimCXHYg_hXWpRlqb";
 const ADMIN_USERNAME = "admin";
 const ADMIN_EMAIL = "tawuahc@gmail.com";
+const ADMIN_UID = "1c77b365-a608-4bf0-901d-53b252168f9e";
 
-const ADMIN_UID =
-  "1c77b365-a608-4bf0-901d-53b252168f9e";
-
-/* 基本設定 */
-
-const CATEGORIES = [
-  "全教會",
-  "區",
-  "親主Team",
-  "周間小組",
-  "愛筵",
-  "學生聚會",
-  "同工相聚",
-  "預工",
-  "家生活"
-];
-
-const DAYS = [
-  "星期日",
-  "星期一",
-  "星期二",
-  "星期三",
-  "星期四",
-  "星期五",
-  "星期六"
-];
-
-const configured =
-  SUPABASE_URL.startsWith("https://") &&
+const CATEGORY_COLORS = {
+  "全教會":   {color:"#78B54C",bg:"#EDF6E6"},
+  "區":       {color:"#A68BD5",bg:"#F1ECFA"},
+  "親主Team": {color:"#C18B12",bg:"#FFF3CD"},
+  "周間小組": {color:"#E0A316",bg:"#FFF7DC"},
+  "愛筵":     {color:"#F0BD4E",bg:"#FFF9E9"},
+  "學生聚會": {color:"#1698D0",bg:"#E6F5FC"},
+  "同工相聚": {color:"#E47772",bg:"#FCECEB"},
+  "預工":     {color:"#7C9C9A",bg:"#EAF2F1"}
+};
+const CATEGORIES = Object.keys(CATEGORY_COLORS);
+function categoryStyle(category){
+  const c=CATEGORY_COLORS[category];
+  return c?`style="--cat-color:${c.color};--cat-bg:${c.bg}"`:"";
+}
+const DAYS = ["星期日","星期一","星期二","星期三","星期四","星期五","星期六"];
+const configured = SUPABASE_URL.startsWith("https://") &&
   SUPABASE_PUBLISHABLE_KEY.startsWith("sb_publishable_") &&
   ADMIN_EMAIL.includes("@");
+const db = configured ? window.supabase.createClient(SUPABASE_URL.trim(),SUPABASE_PUBLISHABLE_KEY.trim()) : null;
 
-const db = configured
-  ? window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    )
-  : null;
-
-let weekly = [];
-let notices = [];
-let session = null;
-let selected = new Set(CATEGORIES);
-let loading = false;
-let savingSort = false;
-let sortableInstance = null;
-
-const $ = id => document.getElementById(id);
-
-const esc = s =>
-  String(s ?? "").replace(/[&<>"']/g,c=>({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#39;"
-  }[c]));
-
-const hasText = x =>
-  x !== null &&
-  x !== undefined &&
-  String(x).trim() !== "";
-
-const tm = t =>
-  hasText(t) ? String(t).slice(0,5) : "";
-
-const range = (a,b) =>
-  [tm(a),tm(b)].filter(hasText).join("–");
-
-const v = id => $(id).value.trim();
+let weekly=[];
+let notices=[];
+let session=null;
+let selected=new Set(CATEGORIES);
+let loading=false;
+let noticeSortable=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const tm=t=>t?String(t).slice(0,5):"";
+const range=(a,b)=>[tm(a),tm(b)].filter(Boolean).join("–");
 
 function msg(id,message,error=false){
-  $(id).textContent = message;
+  $(id).textContent=message;
   $(id).classList.toggle("error",error);
 }
 
-function isAdmin(){
-  return !!session &&
-    session.user.id === ADMIN_UID;
+function updateThemeIcon(){
+  const night=document.body.dataset.theme==="night";
+  $("themeIcon").innerHTML=night
+    ? '<path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path>'
+    : '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2 M12 20v2 M4.93 4.93l1.42 1.42 M17.65 17.65l1.42 1.42 M2 12h2 M20 12h2 M4.93 19.07l1.42-1.42 M17.65 6.35l1.42-1.42"></path>';
+  const label=night?"切換日間模式":"切換夜間模式";
+  $("themeBtn").setAttribute("aria-label",label);
+  $("themeBtn").title=label;
 }
+$("themeBtn").onclick=()=>{
+  document.body.dataset.theme=document.body.dataset.theme==="night"?"day":"night";
+  updateThemeIcon();
+};
+updateThemeIcon();
 
-function sortNotices(items){
-  return [...items].sort((a,b)=>{
-    const ao = a.sort_order == null
-      ? Number.MAX_SAFE_INTEGER
-      : Number(a.sort_order);
-
-    const bo = b.sort_order == null
-      ? Number.MAX_SAFE_INTEGER
-      : Number(b.sort_order);
-
-    if(ao !== bo){
-      return ao-bo;
-    }
-
-    return (a.start_date || "").localeCompare(
-      b.start_date || ""
-    ) || String(a.id).localeCompare(String(b.id));
+function categorySelect(id,allowBlank=false){
+  $(id).innerHTML=(allowBlank?'<option value="">不指定</option>':"")+
+    CATEGORIES.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
+}
+function filters(){
+  $("categoryFilters").innerHTML=CATEGORIES.map(c=>`
+    <label class="filter" ${categoryStyle(c)}><input type="checkbox" checked value="${esc(c)}">${esc(c)}</label>`).join("");
+  $("categoryFilters").addEventListener("change",e=>{
+    if(!e.target.matches('input[type="checkbox"]'))return;
+    if(e.target.checked)selected.add(e.target.value);else selected.delete(e.target.value);
+    renderWeekly();
   });
 }
 
-/* 日夜模式 */
-
-function updateThemeIcon(){
-  const night =
-    document.body.dataset.theme === "night";
-
-  $("themeIcon").innerHTML = night
-    ? '<path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path>'
-    : '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2 M12 20v2 M4.93 4.93l1.42 1.42 M17.65 17.65l1.42 1.42 M2 12h2 M20 12h2 M4.93 19.07l1.42-1.42 M17.65 6.35l1.42-1.42"></path>';
-
-  const label = night
-    ? "切換日間模式"
-    : "切換夜間模式";
-
-  $("themeBtn").setAttribute("aria-label",label);
-  $("themeBtn").title = label;
-}
-
-$("themeBtn").onclick = () => {
-  document.body.dataset.theme =
-    document.body.dataset.theme === "night"
-      ? "day"
-      : "night";
-
-  updateThemeIcon();
-};
-
-updateThemeIcon();
-
-/* 分類 */
-
-function categorySelect(id,allowBlank=false){
-  $(id).innerHTML =
-    (allowBlank
-      ? '<option value="">不指定</option>'
-      : "") +
-    CATEGORIES.map(c =>
-      `<option value="${esc(c)}">${esc(c)}</option>`
-    ).join("");
-}
-
-function filters(){
-  $("categoryFilters").innerHTML =
-    CATEGORIES.map(c => `
-      <label class="filter">
-        <input type="checkbox"
-          checked value="${esc(c)}">
-        ${esc(c)}
-      </label>
-    `).join("");
-
-  $("categoryFilters").addEventListener(
-    "change",
-    e => {
-      if(!e.target.matches('input[type="checkbox"]')){
-        return;
-      }
-
-      if(e.target.checked){
-        selected.add(e.target.value);
-      }else{
-        selected.delete(e.target.value);
-      }
-
-      renderWeekly();
-    }
-  );
-}
-
-/* 每週聚會：空白欄位不顯示 */
-
-function buildWeeklyEventHTML(x){
-  const title = hasText(x.title)
-    ? String(x.title).trim()
-    : "";
-
-  const category = hasText(x.category)
-    ? String(x.category).trim()
-    : "";
-
-  const time = range(x.start_time,x.end_time);
-
-  const location = hasText(x.location)
-    ? String(x.location).trim()
-    : "";
-
-  const contact = hasText(x.contact_person)
-    ? "聯絡："+String(x.contact_person).trim()
-    : "";
-
-  const notes = hasText(x.notes)
-    ? String(x.notes).trim()
-    : "";
-
-  const meta = [time,location,contact]
-    .filter(hasText)
-    .join("　·　");
-
-  return `
-    <div class="event-line">
-      <div class="event-heading">
-        ${category
-          ? `<span class="tag">${esc(category)}</span>`
-          : ""}
-
-        <span class="event-title">${esc(title)}</span>
-      </div>
-
-      ${meta
-        ? `<div class="event-meta">${esc(meta)}</div>`
-        : ""}
-
-      ${notes
-        ? `<div class="event-notes">${esc(notes)}</div>`
-        : ""}
-    </div>
-  `;
-}
-
 function renderWeekly(){
-  $("weeklyBody").innerHTML =
-    DAYS.map((day,i)=>{
-      const events = weekly
-        .filter(x =>
-          Number(x.weekday) === i &&
-          (!hasText(x.category) ||
-            selected.has(x.category))
-        )
-        .sort((a,b)=>
-          (a.start_time || "").localeCompare(
-            b.start_time || ""
-          )
-        );
-
-      const details = events.length
-        ? `<div class="weekly-events">
-            ${events.map(buildWeeklyEventHTML).join("")}
-           </div>`
-        : '<span class="muted">暫無安排</span>';
-
-      return `
-        <tr>
-          <td class="weekday">${day}</td>
-          <td>${details}</td>
-        </tr>
-      `;
-    }).join("");
-
+  $("weeklyBody").innerHTML=DAYS.map((day,i)=>{
+    const events=weekly.filter(x=>Number(x.weekday)===i&&selected.has(x.category))
+      .sort((a,b)=>(a.start_time||"").localeCompare(b.start_time||""));
+    const details=events.length?events.map(x=>`
+      <div class="event-line">
+        <div class="event-title"><span class="tag" ${categoryStyle(x.category)}>${esc(x.category)}</span>${esc(x.title)}</div>
+        ${[range(x.start_time,x.end_time),x.location,x.contact_person?"聯絡："+x.contact_person:""].filter(Boolean).length?`<div class="event-meta">${esc([range(x.start_time,x.end_time),x.location,x.contact_person?"聯絡："+x.contact_person:""].filter(Boolean).join("　·　"))}</div>`:""}
+        ${x.notes?`<div class="event-meta">${esc(x.notes)}</div>`:""}
+      </div>`).join(""):'<span class="muted">暫無安排</span>';
+    return `<tr><td class="weekday">${day}</td><td>${details}</td></tr>`;
+  }).join("");
   renderWeeklyAdmin();
 }
 
-/* 特別通告：隱藏管理日期 */
-
-function buildAnnouncementHTML(x){
-  const time = range(x.start_time,x.end_time);
-
-  const location = hasText(x.location)
-    ? String(x.location).trim()
-    : "";
-
-  const category = hasText(x.category)
-    ? String(x.category).trim()
-    : "";
-
-  const content = hasText(x.content)
-    ? String(x.content).trim()
-    : "";
-
-  const meta = [time,location]
-    .filter(hasText)
-    .join("　·　");
-
-  return `
+function renderNotices(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const active=notices.filter(x=>new Date((x.end_date||x.start_date)+"T23:59:59")>=today)
+    .sort((a,b)=>(Number(a.sort_order??999999)-Number(b.sort_order??999999))||a.start_date.localeCompare(b.start_date));
+  $("announcements").innerHTML=active.length?active.map(x=>`
     <article class="announcement">
       <h3>${esc(x.title)}</h3>
-
-      ${meta
-        ? `<div class="announcement-meta">${esc(meta)}</div>`
-        : ""}
-
-      ${category
-        ? `<div class="announcement-category">
-            <span class="tag">${esc(category)}</span>
-           </div>`
-        : ""}
-
-      ${content
-        ? `<div class="announcement-content">${esc(content)}</div>`
-        : ""}
-    </article>
-  `;
-}
-
-function activeNotices(){
-  const today = new Date();
-  today.setHours(0,0,0,0);
-
-  return sortNotices(
-    notices.filter(x =>
-      new Date(
-        (x.end_date || x.start_date) +
-        "T23:59:59"
-      ) >= today
-    )
-  );
-}
-
-function renderPublicNotices(){
-  const active = activeNotices();
-
-  $("announcements").innerHTML =
-    active.length
-      ? active.map(buildAnnouncementHTML).join("")
-      : '<div class="empty">目前沒有特別通告。</div>';
-}
-
-function renderNotices(){
-  renderPublicNotices();
+      ${range(x.start_time,x.end_time)||x.location?`<div class="event-meta">${esc([range(x.start_time,x.end_time),x.location].filter(Boolean).join("　·　"))}</div>`:""}
+      ${x.category?`<div style="margin:7px 0"><span class="tag" ${categoryStyle(x.category)}>${esc(x.category)}</span></div>`:""}
+      ${x.content?`<div class="announcement-content">${esc(x.content)}</div>`:""}
+    </article>`).join(""):'<div class="empty">目前沒有特別通告。</div>';
   renderNoticeAdmin();
 }
 
-/* 讀取 Supabase */
-
 async function load(){
-  if(loading || savingSort){
-    return;
-  }
-
-  loading = true;
-
-  const btn = $("refreshBtn");
-  btn.disabled = true;
+  if(loading)return;
+  loading=true;
+  const btn=$("refreshBtn");
+  btn.disabled=true;
   btn.classList.add("loading");
   btn.setAttribute("aria-busy","true");
 
   try{
     if(!db){
-      msg(
-        "globalStatus",
-        "尚未設定 Supabase 連線資料。",
-        true
-      );
+      msg("globalStatus","尚未設定連線資料：請填入 Supabase Project URL、Publishable key 及管理員電郵。",true);
+      $("weeklyBody").innerHTML='<tr><td colspan="2">尚未連接資料庫</td></tr>';
+      $("announcements").textContent="尚未連接資料庫";
       return;
     }
 
     msg("globalStatus","正在讀取資料……");
-
-    const [wr,nr] = await Promise.all([
-      db.from("weekly_events")
-        .select("*")
-        .order("weekday")
-        .order("start_time"),
-
-      db.from("monthly_announcements")
-        .select("*")
-        .order("sort_order",{ascending:true})
-        .order("start_date")
+    const [wr,nr]=await Promise.all([
+      db.from("weekly_events").select("*").order("weekday").order("start_time"),
+      db.from("monthly_announcements").select("*").order("sort_order",{ascending:true,nullsFirst:false}).order("start_date")
     ]);
 
-    if(wr.error || nr.error){
-      throw wr.error || nr.error;
+    if(wr.error||nr.error){
+      msg("globalStatus","讀取失敗："+(wr.error?.message||nr.error?.message),true);
+      $("weeklyBody").innerHTML='<tr><td colspan="2">讀取資料失敗，請檢查資料庫設定。</td></tr>';
+      $("announcements").textContent="讀取通告失敗。";
+      return;
     }
 
-    weekly = wr.data || [];
-    notices = sortNotices(nr.data || []);
-
+    weekly=wr.data||[];
+    notices=nr.data||[];
     msg("globalStatus","資料已更新");
-
     renderWeekly();
     renderNotices();
-
     await syncSession();
-
   }catch(error){
-    msg(
-      "globalStatus",
-      "讀取失敗："+(
-        error?.message || "請檢查網絡連線。"
-      ),
-      true
-    );
-
+    msg("globalStatus","讀取失敗："+(error?.message||"請檢查網絡連線。"),true);
   }finally{
-    loading = false;
-    btn.disabled = false;
+    loading=false;
+    btn.disabled=false;
     btn.classList.remove("loading");
     btn.removeAttribute("aria-busy");
   }
 }
 
-/* 管理員狀態 */
-
 async function syncSession(){
-  if(!db){
-    return;
-  }
-
-  const result = await db.auth.getSession();
-  session = result.data.session;
-
-  $("adminPanel").classList.toggle(
-    "open",
-    isAdmin()
-  );
-
-  $("loginBtn").setAttribute(
-    "aria-label",
-    isAdmin() ? "管理員已登入" : "管理員登入"
-  );
-
-  $("loginBtn").title =
-    isAdmin() ? "管理員已登入" : "管理員登入";
-
-  if(isAdmin()){
-    renderWeeklyAdmin();
-    renderNoticeAdmin();
-  }else if(sortableInstance){
-    sortableInstance.destroy();
-    sortableInstance = null;
-  }
+  if(!db)return;
+  const result=await db.auth.getSession();
+  session=result.data.session;
+  const isAdmin=!!session&&session.user.id===ADMIN_UID;
+  $("adminPanel").classList.toggle("open",isAdmin);
+  $("loginBtn").setAttribute("aria-label",isAdmin?"管理員已登入":"管理員登入");
+  $("loginBtn").title=isAdmin?"管理員已登入":"管理員登入";
+  if(isAdmin){renderWeeklyAdmin();renderNoticeAdmin();}
 }
-
-/* 每週聚會管理清單 */
 
 function renderWeeklyAdmin(){
-  if(!isAdmin()){
-    return;
-  }
-
-  $("weeklyAdminList").innerHTML =
-    "<h3>現有每週聚會</h3>" +
-    weekly.map(x=>{
-      const meta = [
-        x.category,
-        range(x.start_time,x.end_time)
-      ].filter(hasText).join("　·　");
-
-      return `
-        <div class="admin-list-item">
-          <div>
-            <strong>
-              ${DAYS[Number(x.weekday)]}
-              · ${esc(x.title)}
-            </strong>
-
-            ${meta
-              ? `<div class="muted">${esc(meta)}</div>`
-              : ""}
-          </div>
-
-          <div class="small-actions">
-            <button type="button"
-              data-ew="${esc(x.id)}">
-              編輯
-            </button>
-
-            <button type="button"
-              class="danger"
-              data-dw="${esc(x.id)}">
-              刪除
-            </button>
-          </div>
-        </div>
-      `;
-    }).join("");
+  if(!$("adminPanel").classList.contains("open"))return;
+  $("weeklyAdminList").innerHTML="<h3>現有每週聚會</h3>"+weekly.map(x=>`
+    <div class="admin-list-item"><div><strong>${DAYS[Number(x.weekday)]} · ${esc(x.title)}</strong>
+    <div class="muted">${esc(x.category)} ${esc(range(x.start_time,x.end_time))}</div></div>
+    <div class="small-actions"><button type="button" data-ew="${esc(x.id)}">編輯</button><button type="button" class="danger" data-dw="${esc(x.id)}">刪除</button></div></div>`).join("");
 }
-
-/* 特別通告管理清單 */
-
 function renderNoticeAdmin(){
-  if(!isAdmin()){
-    return;
+  if(!$("adminPanel").classList.contains("open"))return;
+  if(noticeSortable){noticeSortable.destroy();noticeSortable=null;}
+  const ordered=[...notices].sort((a,b)=>(Number(a.sort_order??999999)-Number(b.sort_order??999999))||a.start_date.localeCompare(b.start_date));
+  $("announcementAdminList").innerHTML=`<h3>現有特別通告</h3><div class="muted" style="margin:5px 0 8px">按住左側拖曳圖示即可調整顯示次序；放開後會自動儲存。</div>`+ordered.map(x=>`
+    <div class="admin-list-item" data-notice-id="${esc(x.id)}"><div style="display:flex;align-items:flex-start;min-width:0"><span class="drag-handle" title="拖曳以排序" aria-label="拖曳以排序">⠿</span><div><strong>${esc(x.title)}</strong><div class="muted">${esc(x.start_date)} ${esc(x.location)}</div></div></div>
+    <div class="small-actions"><button type="button" data-ea="${esc(x.id)}">編輯</button><button type="button" class="danger" data-da="${esc(x.id)}">刪除</button></div></div>`).join("");
+  const list=$("announcementAdminList");
+  if(window.Sortable){
+    noticeSortable=Sortable.create(list,{animation:160,handle:".drag-handle",draggable:".admin-list-item",ghostClass:"sortable-ghost",chosenClass:"sortable-chosen",onEnd:saveNoticeOrder});
   }
-
-  if(sortableInstance){
-    sortableInstance.destroy();
-    sortableInstance = null;
-  }
-
-  notices = sortNotices(notices);
-
-  $("announcementAdminList").innerHTML =
-    notices.map(x=>`
-      <div class="sortable-item"
-        data-id="${esc(x.id)}">
-
-        <button
-          type="button"
-          class="drag-handle"
-          aria-label="拖曳排序：${esc(x.title)}"
-          title="按住並拖曳排序">⠿</button>
-
-        <div class="sortable-info">
-          <strong>${esc(x.title)}</strong>
-
-          <div class="muted">
-            ${esc(x.start_date)}
-            ${hasText(x.location)
-              ? "　"+esc(x.location)
-              : ""}
-          </div>
-        </div>
-
-        <div class="small-actions">
-          <button type="button"
-            data-ea="${esc(x.id)}">
-            編輯
-          </button>
-
-          <button type="button"
-            class="danger"
-            data-da="${esc(x.id)}">
-            刪除
-          </button>
-        </div>
-      </div>
-    `).join("");
-
-  initializeDragSort();
 }
-
-/* 拖曳排序 */
-
-function initializeDragSort(){
-  if(!isAdmin()){
-    return;
-  }
-
-  if(typeof Sortable === "undefined"){
-    msg(
-      "sortStatus",
-      "拖曳功能未能載入，請檢查網絡連線。",
-      true
-    );
-    return;
-  }
-
-  sortableInstance = new Sortable(
-    $("announcementAdminList"),
-    {
-      animation:180,
-      handle:".drag-handle",
-      draggable:".sortable-item",
-      ghostClass:"sortable-ghost",
-      chosenClass:"sortable-chosen",
-      dragClass:"sortable-drag",
-      touchStartThreshold:4,
-
-      onEnd:async event=>{
-        if(event.oldIndex === event.newIndex){
-          return;
-        }
-
-        await saveNoticeOrder();
-      }
-    }
-  );
-}
-
-/* 儲存排序 */
 
 async function saveNoticeOrder(){
-  if(!isAdmin() || savingSort){
-    return;
-  }
-
-  const list = $("announcementAdminList");
-
-  const ids = Array.from(
-    list.querySelectorAll(".sortable-item")
-  ).map(el=>el.dataset.id);
-
-  if(ids.length !== notices.length){
-    msg(
-      "sortStatus",
-      "排序資料不完整，請重新整理。",
-      true
-    );
-    return;
-  }
-
-  savingSort = true;
-  list.classList.add("sortable-saving");
-
-  if(sortableInstance){
-    sortableInstance.option("disabled",true);
-  }
-
-  msg("sortStatus","正在儲存新次序……");
-
-  const previousOrder = [...notices];
-
+  if(!session||session.user.id!==ADMIN_UID)return;
+  const rows=[...$("announcementAdminList").querySelectorAll(".admin-list-item")];
+  const updates=rows.map((el,index)=>db.from("monthly_announcements").update({sort_order:index+1}).eq("id",el.dataset.noticeId));
+  msg("globalStatus","正在儲存通告次序……");
   try{
-    for(let i=0;i<ids.length;i++){
-      const result = await db
-        .from("monthly_announcements")
-        .update({sort_order:i+1})
-        .eq("id",ids[i])
-        .select("id");
-
-      if(result.error){
-        throw result.error;
-      }
-
-      if(!result.data || result.data.length !== 1){
-        throw new Error(
-          "部分通告未能更新，請檢查管理員權限。"
-        );
-      }
-    }
-
-    notices = ids.map((id,index)=>{
-      const original = previousOrder.find(
-        x=>String(x.id) === String(id)
-      );
-
-      return {
-        ...original,
-        sort_order:index+1
-      };
-    });
-
-    renderPublicNotices();
-
-    msg("sortStatus","新次序已儲存。");
-    msg("globalStatus","特別通告排序已更新。");
-
+    const results=await Promise.all(updates);
+    const failed=results.find(r=>r.error);
+    if(failed){msg("globalStatus","排序儲存失敗："+failed.error.message,true);await load();return;}
+    rows.forEach((el,index)=>{const item=notices.find(x=>String(x.id)===el.dataset.noticeId);if(item)item.sort_order=index+1;});
+    renderNotices();
+    msg("globalStatus","通告次序已儲存。");
   }catch(error){
-    msg(
-      "sortStatus",
-      "儲存排序失敗："+error.message+
-      "。請重新整理後再試。",
-      true
-    );
-
-  }finally{
-    savingSort = false;
-    list.classList.remove("sortable-saving");
-
-    if(sortableInstance){
-      sortableInstance.option("disabled",false);
-    }
+    msg("globalStatus","排序儲存失敗："+(error?.message||"請稍後再試。"),true);
+    await load();
   }
 }
 
-/* 表格重設 */
+const v=id=>$(id).value.trim();
+function resetW(){$("weeklyForm").reset();$("weeklyId").value="";}
+function resetA(){$("announcementForm").reset();$("announcementId").value="";}
+$("weeklyReset").onclick=resetW;
+$("announcementReset").onclick=resetA;
 
-function resetW(){
-  $("weeklyForm").reset();
-  $("weeklyId").value = "";
-}
-
-function resetA(){
-  $("announcementForm").reset();
-  $("announcementId").value = "";
-}
-
-$("weeklyReset").onclick = resetW;
-$("announcementReset").onclick = resetA;
-
-/* 儲存每週聚會 */
-
-$("weeklyForm").onsubmit = async e=>{
+$("weeklyForm").onsubmit=async e=>{
   e.preventDefault();
-
-  if(!isAdmin()){
-    msg(
-      "globalStatus",
-      "請先以管理員帳戶登入。",
-      true
-    );
-    return;
-  }
-
-  const id = v("weeklyId");
-
-  const row = {
-    weekday:Number(v("weekday")),
-    category:v("weeklyCategory"),
-    title:v("weeklyTitle"),
-    start_time:v("weeklyStart") || null,
-    end_time:v("weeklyEnd") || null,
-    location:v("weeklyLocation"),
-    contact_person:v("weeklyContact"),
-    notes:v("weeklyNotes")
-  };
-
-  const r = id
-    ? await db.from("weekly_events")
-        .update(row).eq("id",id)
-    : await db.from("weekly_events")
-        .insert(row);
-
-  if(r.error){
-    msg(
-      "globalStatus",
-      "儲存失敗："+r.error.message,
-      true
-    );
-    return;
-  }
-
-  resetW();
-  await load();
-  msg("globalStatus","聚會資料已儲存。");
+  if(!session||session.user.id!==ADMIN_UID){msg("globalStatus","請先以管理員帳戶登入。",true);return;}
+  const id=v("weeklyId");
+  const row={weekday:Number(v("weekday")),category:v("weeklyCategory"),title:v("weeklyTitle"),start_time:v("weeklyStart")||null,end_time:v("weeklyEnd")||null,location:v("weeklyLocation"),contact_person:v("weeklyContact"),notes:v("weeklyNotes")};
+  const r=id?await db.from("weekly_events").update(row).eq("id",id):await db.from("weekly_events").insert(row);
+  if(r.error){msg("globalStatus","儲存失敗："+r.error.message,true);return;}
+  resetW();await load();msg("globalStatus","聚會資料已儲存。");
 };
 
-/* 儲存特別通告 */
-
-$("announcementForm").onsubmit = async e=>{
+$("announcementForm").onsubmit=async e=>{
   e.preventDefault();
-
-  if(!isAdmin()){
-    msg(
-      "globalStatus",
-      "請先以管理員帳戶登入。",
-      true
-    );
-    return;
-  }
-
-  const id = v("announcementId");
-  const start = v("announcementStartDate");
-  const end = v("announcementEndDate") || null;
-
-  if(end && end < start){
-    msg(
-      "globalStatus",
-      "結束日期不可早於開始日期。",
-      true
-    );
-    return;
-  }
-
-  const row = {
-    title:v("announcementTitle"),
-    start_date:start,
-    end_date:end,
-    category:v("announcementCategory") || null,
-    start_time:v("announcementStart") || null,
-    end_time:v("announcementEnd") || null,
-    location:v("announcementLocation"),
-    content:v("announcementContent")
-  };
-
-  if(!id){
-    row.sort_order = notices.reduce(
-      (max,x)=>Math.max(
-        max,
-        Number(x.sort_order) || 0
-      ),
-      0
-    ) + 1;
-  }
-
-  const r = id
-    ? await db.from("monthly_announcements")
-        .update(row).eq("id",id)
-    : await db.from("monthly_announcements")
-        .insert(row);
-
-  if(r.error){
-    msg(
-      "globalStatus",
-      "儲存失敗："+r.error.message,
-      true
-    );
-    return;
-  }
-
-  resetA();
-  await load();
-  msg("globalStatus","通告已儲存。");
+  if(!session||session.user.id!==ADMIN_UID){msg("globalStatus","請先以管理員帳戶登入。",true);return;}
+  const id=v("announcementId"),start=v("announcementStartDate"),end=v("announcementEndDate")||null;
+  if(end&&end<start){msg("globalStatus","結束日期不可早於開始日期。",true);return;}
+  const row={title:v("announcementTitle"),start_date:start,end_date:end,category:v("announcementCategory")||null,start_time:v("announcementStart")||null,end_time:v("announcementEnd")||null,location:v("announcementLocation"),content:v("announcementContent")};
+  if(!id)row.sort_order=(notices.reduce((max,x)=>Math.max(max,Number(x.sort_order)||0),0))+1;
+  const r=id?await db.from("monthly_announcements").update(row).eq("id",id):await db.from("monthly_announcements").insert(row);
+  if(r.error){msg("globalStatus","儲存失敗："+r.error.message,true);return;}
+  resetA();await load();msg("globalStatus","通告已儲存。");
 };
 
-/* 編輯及刪除每週聚會 */
-
-$("weeklyAdminList").onclick = async e=>{
-  const b = e.target.closest("button");
-
-  if(!b || !isAdmin()){
-    return;
-  }
-
+$("weeklyAdminList").onclick=async e=>{
+  const b=e.target.closest("button");if(!b)return;
   if(b.dataset.ew){
-    const x = weekly.find(
-      a=>String(a.id) === b.dataset.ew
-    );
-
-    if(!x){
-      return;
-    }
-
-    $("weeklyId").value = x.id;
-    $("weekday").value = x.weekday;
-    $("weeklyCategory").value = x.category;
-    $("weeklyTitle").value = x.title;
-    $("weeklyStart").value = tm(x.start_time);
-    $("weeklyEnd").value = tm(x.end_time);
-    $("weeklyLocation").value = x.location || "";
-    $("weeklyContact").value = x.contact_person || "";
-    $("weeklyNotes").value = x.notes || "";
-
-    $("weeklyForm").scrollIntoView({
-      behavior:"smooth"
-    });
+    const x=weekly.find(a=>String(a.id)===b.dataset.ew);if(!x)return;
+    $("weeklyId").value=x.id;$("weekday").value=x.weekday;$("weeklyCategory").value=x.category;
+    $("weeklyTitle").value=x.title;$("weeklyStart").value=tm(x.start_time);$("weeklyEnd").value=tm(x.end_time);
+    $("weeklyLocation").value=x.location||"";$("weeklyContact").value=x.contact_person||"";$("weeklyNotes").value=x.notes||"";
+    $("weeklyForm").scrollIntoView({behavior:"smooth"});
   }
-
-  if(b.dataset.dw &&
-    confirm("確定刪除此聚會？")){
-
-    const r = await db
-      .from("weekly_events")
-      .delete()
-      .eq("id",b.dataset.dw);
-
-    if(r.error){
-      msg(
-        "globalStatus",
-        "刪除失敗："+r.error.message,
-        true
-      );
-    }else{
-      await load();
-      msg("globalStatus","聚會已刪除。");
-    }
+  if(b.dataset.dw&&confirm("確定刪除此聚會？")){
+    const r=await db.from("weekly_events").delete().eq("id",b.dataset.dw);
+    if(r.error)msg("globalStatus","刪除失敗："+r.error.message,true);
+    else{await load();msg("globalStatus","聚會已刪除。");}
   }
 };
 
-/* 編輯及刪除特別通告 */
-
-$("announcementAdminList").onclick = async e=>{
-  const b = e.target.closest("button");
-
-  if(!b || !isAdmin() || savingSort){
-    return;
-  }
-
+$("announcementAdminList").onclick=async e=>{
+  const b=e.target.closest("button");if(!b)return;
   if(b.dataset.ea){
-    const x = notices.find(
-      a=>String(a.id) === b.dataset.ea
-    );
-
-    if(!x){
-      return;
-    }
-
-    $("announcementId").value = x.id;
-    $("announcementTitle").value = x.title;
-    $("announcementStartDate").value = x.start_date;
-    $("announcementEndDate").value = x.end_date || "";
-    $("announcementCategory").value = x.category || "";
-    $("announcementStart").value = tm(x.start_time);
-    $("announcementEnd").value = tm(x.end_time);
-    $("announcementLocation").value = x.location || "";
-    $("announcementContent").value = x.content || "";
-
-    $("announcementForm").scrollIntoView({
-      behavior:"smooth"
-    });
+    const x=notices.find(a=>String(a.id)===b.dataset.ea);if(!x)return;
+    $("announcementId").value=x.id;$("announcementTitle").value=x.title;$("announcementStartDate").value=x.start_date;
+    $("announcementEndDate").value=x.end_date||"";$("announcementCategory").value=x.category||"";
+    $("announcementStart").value=tm(x.start_time);$("announcementEnd").value=tm(x.end_time);
+    $("announcementLocation").value=x.location||"";$("announcementContent").value=x.content||"";
+    $("announcementForm").scrollIntoView({behavior:"smooth"});
   }
-
-  if(b.dataset.da &&
-    confirm("確定刪除此通告？")){
-
-    const r = await db
-      .from("monthly_announcements")
-      .delete()
-      .eq("id",b.dataset.da);
-
-    if(r.error){
-      msg(
-        "globalStatus",
-        "刪除失敗："+r.error.message,
-        true
-      );
-    }else{
-      await load();
-      msg("globalStatus","通告已刪除。");
-    }
+  if(b.dataset.da&&confirm("確定刪除此通告？")){
+    const r=await db.from("monthly_announcements").delete().eq("id",b.dataset.da);
+    if(r.error)msg("globalStatus","刪除失敗："+r.error.message,true);
+    else{await load();msg("globalStatus","通告已刪除。");}
   }
 };
-
-/* 重新整理 */
 
 $("refreshBtn").addEventListener("click",load);
 
-/* 管理員登入 */
-
-$("loginBtn").onclick = ()=>{
-  if(isAdmin()){
-    $("adminPanel").scrollIntoView({
-      behavior:"smooth"
-    });
-    return;
-  }
-
+$("loginBtn").onclick=()=>{
+  if(session&&session.user.id===ADMIN_UID){$("adminPanel").scrollIntoView({behavior:"smooth"});return;}
   $("loginBox").classList.add("open");
-
-  $("loginBox").scrollIntoView({
-    behavior:"smooth"
-  });
+  $("loginBox").scrollIntoView({behavior:"smooth"});
 };
+$("closeLogin").onclick=()=>$("loginBox").classList.remove("open");
 
-$("closeLogin").onclick = ()=>
-  $("loginBox").classList.remove("open");
-
-$("loginForm").onsubmit = async e=>{
+$("loginForm").onsubmit=async e=>{
   e.preventDefault();
-
-  if(!db){
-    msg(
-      "loginStatus",
-      "請先完成 Supabase 設定。",
-      true
-    );
-    return;
-  }
-
-  if(v("loginUsername") !== ADMIN_USERNAME){
-    msg(
-      "loginStatus",
-      "使用者名稱或密碼不正確。",
-      true
-    );
-    return;
-  }
-
-  const r = await db.auth.signInWithPassword({
-    email:ADMIN_EMAIL,
-    password:$("loginPassword").value
-  });
-
-  if(r.error){
-    msg(
-      "loginStatus",
-      "登入失敗，請檢查登入資料。",
-      true
-    );
-    return;
-  }
-
-  if(r.data.user.id !== ADMIN_UID){
-    await db.auth.signOut();
-
-    msg(
-      "loginStatus",
-      "此帳戶沒有管理員權限。",
-      true
-    );
-    return;
-  }
-
-  session = r.data.session;
-
-  $("loginBox").classList.remove("open");
-  $("loginPassword").value = "";
-
-  await syncSession();
-
-  msg("globalStatus","管理員登入成功。");
-
-  $("adminPanel").scrollIntoView({
-    behavior:"smooth"
-  });
+  if(!db){msg("loginStatus","請先完成 Supabase 設定。",true);return;}
+  if(v("loginUsername")!==ADMIN_USERNAME){msg("loginStatus","使用者名稱或密碼不正確。",true);return;}
+  const r=await db.auth.signInWithPassword({email:ADMIN_EMAIL,password:$("loginPassword").value});
+  if(r.error){msg("loginStatus","登入失敗，請檢查登入資料。",true);return;}
+  if(r.data.user.id!==ADMIN_UID){await db.auth.signOut();msg("loginStatus","此帳戶沒有管理員權限。",true);return;}
+  $("loginBox").classList.remove("open");$("loginPassword").value="";
+  await syncSession();msg("globalStatus","管理員登入成功。");
+  $("adminPanel").scrollIntoView({behavior:"smooth"});
 };
 
-/* 登出 */
-
-$("logoutBtn").onclick = async ()=>{
-  if(db){
-    await db.auth.signOut();
-  }
-
-  session = null;
-
-  $("adminPanel").classList.remove("open");
-
-  if(sortableInstance){
-    sortableInstance.destroy();
-    sortableInstance = null;
-  }
-
-  $("loginBtn").setAttribute(
-    "aria-label",
-    "管理員登入"
-  );
-
-  $("loginBtn").title = "管理員登入";
-
+$("logoutBtn").onclick=async()=>{
+  if(db)await db.auth.signOut();
+  session=null;$("adminPanel").classList.remove("open");
+  $("loginBtn").setAttribute("aria-label","管理員登入");
+  $("loginBtn").title="管理員登入";
   msg("globalStatus","已登出。");
 };
 
-/* 初始化 */
-
 categorySelect("weeklyCategory");
 categorySelect("announcementCategory",true);
-
 filters();
 load();
-
 </script>
 </body>
 </html>
