@@ -64,7 +64,10 @@ textarea:focus-visible{
   outline-offset:2px;
 }
 
-button:disabled{opacity:.55;cursor:not-allowed}
+button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
 
 .app{
   max-width:1100px;
@@ -75,7 +78,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 header{
   display:flex;
   justify-content:space-between;
-  align-items:center;
+  align-items:flex-start;
   gap:12px;
   margin-bottom:20px;
 }
@@ -96,11 +99,30 @@ h1{
 h2{font-size:1.2rem;margin:0}
 h3{font-size:1.05rem}
 
+/* 右上角按鈕：兩欄兩行 */
+
 .actions{
-  display:flex;
+  display:grid;
+  grid-template-columns:44px 44px;
+  grid-template-rows:44px 44px;
   gap:8px;
   align-items:center;
-  flex-wrap:wrap;
+  flex-shrink:0;
+}
+
+#themeBtn{
+  grid-column:1;
+  grid-row:1;
+}
+
+#refreshBtn{
+  grid-column:2;
+  grid-row:1;
+}
+
+#loginBtn{
+  grid-column:2;
+  grid-row:2;
 }
 
 #refreshBtn,#themeBtn,#loginBtn{
@@ -113,7 +135,9 @@ h3{font-size:1.05rem}
   border-radius:10px;
 }
 
-#refreshBtn svg,#themeBtn svg,#loginBtn svg{
+#refreshBtn svg,
+#themeBtn svg,
+#loginBtn svg{
   width:23px;
   height:23px;
 }
@@ -193,7 +217,7 @@ h3{font-size:1.05rem}
   width:auto;
 }
 
-/* 一週聚會：緊湊表格 */
+/* 每週聚會：自動緊湊排版 */
 
 .weekly-table{
   width:100%;
@@ -286,7 +310,7 @@ h3{font-size:1.05rem}
   overflow-wrap:anywhere;
 }
 
-/* 特別通告：緊湊排版 */
+/* 特別通告：自動緊湊排版 */
 
 #announcements{
   display:flex;
@@ -323,7 +347,9 @@ h3{font-size:1.05rem}
   overflow-wrap:anywhere;
 }
 
-.announcement-category{margin-top:6px}
+.announcement-category{
+  margin-top:6px;
+}
 
 .announcement-content{
   margin-top:6px;
@@ -336,6 +362,8 @@ h3{font-size:1.05rem}
   color:var(--muted);
   padding:10px 0;
 }
+
+/* 管理員介面 */
 
 .admin-panel,.login-box{display:none}
 .admin-panel.open,.login-box.open{display:block}
@@ -363,7 +391,11 @@ input,select,textarea{
   color:var(--ink);
 }
 
-textarea{min-height:90px;resize:vertical}
+textarea{
+  min-height:90px;
+  resize:vertical;
+}
+
 .full,.form-actions{grid-column:1/-1}
 
 .form-actions{
@@ -401,6 +433,8 @@ textarea{min-height:90px;resize:vertical}
   gap:6px;
   flex-shrink:0;
 }
+
+/* 拖曳排序 */
 
 .sortable-list{margin-top:10px}
 
@@ -466,16 +500,21 @@ footer{
   padding:18px;
 }
 
+/* 手機版 */
+
 @media(max-width:620px){
   header{align-items:flex-start}
-  .actions{flex-wrap:nowrap;gap:6px}
+  .actions{gap:6px}
   form{grid-template-columns:1fr}
   .full,.form-actions{grid-column:1}
   .weekday{width:78px}
-  .weekly-table th,.weekly-table td{
+
+  .weekly-table th,
+  .weekly-table td{
     padding:8px;
     font-size:.9rem;
   }
+
   .panel{padding:12px}
   .admin-list-item{flex-direction:column}
   .small-actions{align-self:flex-end}
@@ -536,6 +575,7 @@ footer{
   <div class="panel-head">
     <h2>每月特別通告</h2>
   </div>
+
   <div id="announcements">
     <div class="empty">正在載入通告……</div>
   </div>
@@ -558,7 +598,9 @@ footer{
         </tr>
       </thead>
       <tbody id="weeklyBody">
-        <tr><td colspan="2">正在載入聚會……</td></tr>
+        <tr>
+          <td colspan="2">正在載入聚會……</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -575,11 +617,13 @@ footer{
       使用者名稱
       <input id="loginUsername" autocomplete="username" required>
     </label>
+
     <label class="full">
       密碼
       <input id="loginPassword" type="password"
         autocomplete="current-password" required>
     </label>
+
     <div class="form-actions">
       <button class="primary" type="submit">登入</button>
     </div>
@@ -716,6 +760,7 @@ footer{
     </form>
 
     <h3 style="margin-bottom:4px">現有特別通告</h3>
+
     <div class="sort-hint">
       按住左側 ⠿ 圖示，上下拖曳通告調整次序。
       放開後自動儲存。
@@ -897,7 +942,7 @@ function filters(){
   });
 }
 
-/* 一週聚會：有資料才顯示，不留空白 */
+/* 每週聚會：只顯示有填寫的欄位 */
 
 function buildWeeklyEventHTML(x){
   const title = hasText(x.title)
@@ -1495,7 +1540,7 @@ $("announcementAdminList").onclick = async e=>{
 
 $("refreshBtn").addEventListener("click",load);
 
-/* 登入 */
+/* 管理員登入 */
 
 $("loginBtn").onclick = ()=>{
   if(isAdmin()){
