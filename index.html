@@ -90,6 +90,15 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding:18px}
  .admin-list-item{flex-direction:column}
  .small-actions{align-self:flex-end}
 }
+@media screen and (orientation:landscape){
+ .app{
+  --page-padding:clamp(12px,3vw,28px);
+  padding-top:max(var(--page-padding),env(safe-area-inset-top));
+  padding-right:max(var(--page-padding),env(safe-area-inset-right));
+  padding-bottom:max(var(--page-padding),env(safe-area-inset-bottom));
+  padding-left:max(var(--page-padding),env(safe-area-inset-left));
+ }
+}
 </style>
 </head>
 <body>
