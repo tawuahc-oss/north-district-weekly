@@ -21,6 +21,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .app{max-width:1100px;margin:auto;padding:clamp(12px,3vw,28px)}
 header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:4px}
 .brand{font-size:.7rem;letter-spacing:.1em;color:var(--accent);font-weight:800}
+@media(max-width:600px) and (orientation:portrait){.brand{font-size:.6rem}}
+@media(orientation:landscape){.brand{font-size:.55rem}}
 h1{font-size:clamp(1.5rem,4vw,2.3rem);line-height:1.2;margin:4px 0 0}
 h2{font-size:1.2rem;margin:0}
 .actions{display:grid;grid-template-columns:44px 44px;gap:6px;align-items:center}
