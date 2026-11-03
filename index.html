@@ -522,7 +522,7 @@ $("announcementAdminList").onclick=async e=>{
   }
 };
 
-$("refreshBtn").addEventListener("click",load);
+$("refreshBtn").addEventListener("click",()=>window.location.reload());
 
 $("loginBtn").onclick=()=>{
   if(session&&session.user.id===ADMIN_UID){$("adminPanel").scrollIntoView({behavior:"smooth"});return;}
