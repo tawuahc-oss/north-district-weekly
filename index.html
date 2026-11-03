@@ -109,6 +109,10 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding:18px}
 #weeklyBody .event-line:last-child{padding-bottom:0}
 #weeklyBody .event-meta{margin-top:1px}
 #weeklyBody .empty{padding-block:2px}
+.panel.monthly-notices{padding-block:10px}
+.monthly-notices .panel-head{margin-bottom:4px}
+#announcements .announcement{padding-block:6px;margin:0}
+#announcements .announcement + .announcement{margin-top:4px}
 </style>
 </head>
 <body>
@@ -145,7 +149,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding:18px}
 <div id="globalStatus" class="status" role="status" aria-live="polite"></div>
 </header>
 
-<section class="panel">
+<section class="panel monthly-notices">
   <div class="panel-head"><h2>每月特別通告</h2></div>
   <div id="announcements"><div class="empty">正在載入通告……</div></div>
 </section>
