@@ -186,7 +186,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding:18px}
     <label>分類<select id="categoryToEdit" required></select></label>
     <label>名稱<input id="categoryName" required maxlength="60"></label>
     <label>顏色<input id="categoryColor" type="color" required></label>
-    <div class="form-actions"><button type="submit">儲存分類</button></div>
+    <div class="form-actions"><button type="submit" id="saveCategory">新增分類</button> <button type="submit" id="deleteCategory" formnovalidate disabled>刪除分類</button></div>
     <p id="categoryStatus" class="status full" role="status"></p>
   </form></details>
   <div class="panel-head">
@@ -387,10 +387,11 @@ async function load(){
       CATEGORY_COLORS = Object.fromEntries(cr.data.map(row=>[row.name,row]));
       CATEGORIES = Object.keys(CATEGORY_COLORS);
       selected = new Set(CATEGORIES.filter(name=>selected.has(name)||!previous.includes(name)));
-      for(const [id,blank] of [["weeklyCategory",false],["announcementCategory",true],["categoryToEdit",false]]){
+      for(const [id,blank] of [["weeklyCategory",false],["announcementCategory",true],["categoryToEdit",true]]){
         const value = $(id).value;
         categorySelect(id,blank);
         if(CATEGORIES.includes(value))$(id).value=value;
+        if(id==="categoryToEdit")$(id).options[0].textContent="＋ 新增分類";
       }
       fillCategoryEditor();
       filters();
@@ -553,30 +554,44 @@ $("logoutBtn").onclick=async()=>{
 function fillCategoryEditor(){
   const name = $("categoryToEdit").value;
   $("categoryName").value = name;
+  $("saveCategory").textContent = name ? "儲存分類" : "新增分類";
+  $("deleteCategory").disabled = !name;
   $("categoryColor").value = CATEGORY_COLORS[name]?.color || "#87684a";
 }
 $("categoryToEdit").onchange = fillCategoryEditor;
 $("categoryEditor").onsubmit = async event => {
   event.preventDefault();
-  if(session?.user.id !== ADMIN_UID)return;
-  const button = event.submitter;
+  if(session?.user.id !== ADMIN_UID || $("saveCategory").disabled)return;
   const original = $("categoryToEdit").value;
+  const deleting = event.submitter?.id === "deleteCategory";
   const name = $("categoryName").value.trim();
   const color = $("categoryColor").value;
-  if(!name){msg("categoryStatus","請輸入分類名稱。",true);return;}
-  button.disabled = true;
+  if(deleting && (!original || !confirm("確定刪除分類「"+original+"」？")))return;
+  if(!deleting && !name){msg("categoryStatus","請輸入分類名稱。",true);return;}
+  $("saveCategory").disabled = true;
+  $("deleteCategory").disabled = true;
   try {
-    const {data,error} = await db.from("weekly_categories")
-      .update({name,color,...(color.toLowerCase() !== CATEGORY_COLORS[original].color.toLowerCase() ? {bg:"#ffffff"} : {})})
-      .eq("name",original).select("name").single();
+    const table = db.from("weekly_categories");
+    const existing = CATEGORY_COLORS[original];
+    const values = {name,color,bg:existing?.color.toLowerCase()===color.toLowerCase()?existing.bg:"#ffffff"};
+    let request;
+    if(deleting)request=table.delete().eq("name",original);
+    else if(original)request=table.update(values).eq("name",original);
+    else request=table.insert(values);
+    const {error} = await request.select("name").single();
     if(error)throw error;
     await load();
-    $("categoryToEdit").value = data.name;
+    $("categoryToEdit").value = deleting ? "" : name;
     fillCategoryEditor();
-    msg("categoryStatus","分類已更新。");
+    msg("categoryStatus",deleting?"分類已刪除。":original?"分類已更新。":"分類已新增。");
   } catch(error){
-    msg("categoryStatus",error.code==="23505"?"此分類名稱已存在。":"儲存失敗，請重新整理後再試。",true);
-  } finally {button.disabled = false;}
+    const message = error.code==="23503" ? "仍有聚會或通告使用此分類，請先改派分類。" :
+      error.code==="23505" ? "此分類名稱已存在。" : "操作失敗，請重新整理後再試。";
+    msg("categoryStatus",message,true);
+  } finally {
+    $("saveCategory").disabled = false;
+    $("deleteCategory").disabled = !$("categoryToEdit").value;
+  }
 };
 categorySelect("weeklyCategory");
 categorySelect("announcementCategory",true);
