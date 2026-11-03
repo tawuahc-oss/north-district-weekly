@@ -176,6 +176,13 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding:18px}
 </section>
 
 <section id="adminPanel" class="panel admin-panel">
+  <details><summary>管理分類</summary><form id="categoryEditor">
+    <label>分類<select id="categoryToEdit" required></select></label>
+    <label>名稱<input id="categoryName" required maxlength="60"></label>
+    <label>顏色<input id="categoryColor" type="color" required></label>
+    <div class="form-actions"><button type="submit">儲存分類</button></div>
+    <p id="categoryStatus" class="status full" role="status"></p>
+  </form></details>
   <div class="panel-head">
     <h2>管理員編輯區</h2>
     <button id="logoutBtn" type="button">登出</button>
@@ -244,7 +251,7 @@ const ADMIN_USERNAME = "admin";
 const ADMIN_EMAIL = "tawuahc@gmail.com";
 const ADMIN_UID = "1c77b365-a608-4bf0-901d-53b252168f9e";
 
-const CATEGORY_COLORS = {
+let CATEGORY_COLORS = {
   "全教會":   {color:"#78B54C",bg:"#EDF6E6"},
   "區":       {color:"#A68BD5",bg:"#F1ECFA"},
   "親主Team": {color:"#C18B12",bg:"#FFF3CD"},
@@ -254,7 +261,7 @@ const CATEGORY_COLORS = {
   "同工相聚": {color:"#E47772",bg:"#FCECEB"},
   "預工":     {color:"#7C9C9A",bg:"#EAF2F1"}
 };
-const CATEGORIES = Object.keys(CATEGORY_COLORS);
+let CATEGORIES = Object.keys(CATEGORY_COLORS);
 function categoryStyle(category){
   const c=CATEGORY_COLORS[category];
   return c?`style="--cat-color:${c.color};--cat-bg:${c.bg}"`:"";
@@ -302,7 +309,7 @@ function categorySelect(id,allowBlank=false){
 }
 function filters(){
   $("categoryFilters").innerHTML=CATEGORIES.map(c=>`
-    <label class="filter" ${categoryStyle(c)}><input type="checkbox" checked value="${esc(c)}"><span class="filter-dot" aria-hidden="true"></span>${esc(c)}</label>`).join("");
+    <label class="filter" ${categoryStyle(c)}><input type="checkbox" ${selected.has(c)?"checked":""} value="${esc(c)}"><span class="filter-dot" aria-hidden="true"></span>${esc(c)}</label>`).join("");
   $("categoryFilters").addEventListener("change",e=>{
     if(!e.target.matches('input[type="checkbox"]'))return;
     if(e.target.checked)selected.add(e.target.value);else selected.delete(e.target.value);
@@ -356,7 +363,7 @@ async function load(){
     }
 
     msg("globalStatus","正在讀取資料……");
-    const [wr,nr]=await Promise.all([
+    const [wr,nr,cr]=await Promise.all([
       db.from("weekly_events").select("*").order("weekday").order("start_time"),
       db.from("monthly_announcements").select("*").order("sort_order",{ascending:true,nullsFirst:false}).order("start_date")
     ]);
@@ -368,6 +375,19 @@ async function load(){
       return;
     }
 
+    if(!cr.error){
+      const previous = CATEGORIES;
+      CATEGORY_COLORS = Object.fromEntries(cr.data.map(row=>[row.name,row]));
+      CATEGORIES = Object.keys(CATEGORY_COLORS);
+      selected = new Set(CATEGORIES.filter(name=>selected.has(name)||!previous.includes(name)));
+      for(const [id,blank] of [["weeklyCategory",false],["announcementCategory",true],["categoryToEdit",false]]){
+        const value = $(id).value;
+        categorySelect(id,blank);
+        if(CATEGORIES.includes(value))$(id).value=value;
+      }
+      fillCategoryEditor();
+      filters();
+    }
     weekly=wr.data||[];
     notices=nr.data||[];
     msg("globalStatus","資料已更新");
@@ -523,6 +543,34 @@ $("logoutBtn").onclick=async()=>{
   msg("globalStatus","已登出。");
 };
 
+function fillCategoryEditor(){
+  const name = $("categoryToEdit").value;
+  $("categoryName").value = name;
+  $("categoryColor").value = CATEGORY_COLORS[name]?.color || "#87684a";
+}
+$("categoryToEdit").onchange = fillCategoryEditor;
+$("categoryEditor").onsubmit = async event => {
+  event.preventDefault();
+  if(session?.user.id !== ADMIN_UID)return;
+  const button = event.submitter;
+  const original = $("categoryToEdit").value;
+  const name = $("categoryName").value.trim();
+  const color = $("categoryColor").value;
+  if(!name){msg("categoryStatus","請輸入分類名稱。",true);return;}
+  button.disabled = true;
+  try {
+    const {data,error} = await db.from("weekly_categories")
+      .update({name,color,...(color.toLowerCase() !== CATEGORY_COLORS[original].color.toLowerCase() ? {bg:"#ffffff"} : {})})
+      .eq("name",original).select("name").single();
+    if(error)throw error;
+    await load();
+    $("categoryToEdit").value = data.name;
+    fillCategoryEditor();
+    msg("categoryStatus","分類已更新。");
+  } catch(error){
+    msg("categoryStatus",error.code==="23505"?"此分類名稱已存在。":"儲存失敗，請重新整理後再試。",true);
+  } finally {button.disabled = false;}
+};
 categorySelect("weeklyCategory");
 categorySelect("announcementCategory",true);
 filters();
