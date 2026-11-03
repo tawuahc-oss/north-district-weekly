@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f7f1e8">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>北區學生一週聚會安排</title>
 <link rel="icon" type="image/png" sizes="48x48" href="./weekly-icon-48.png">
 <link rel="apple-touch-icon" sizes="180x180" href="./weekly-icon-180.png">
@@ -314,6 +315,8 @@ const incomingTheme = themeUrl.searchParams.get("theme");
 const themeLink = $("calendarBtn");
 function applyTheme(theme){
   document.body.dataset.theme = theme;
+  document.querySelector('meta[name="theme-color"]').content =
+    getComputedStyle(document.body).getPropertyValue("--bg").trim();
   const destination = new URL(themeLink.href);
   destination.searchParams.set("theme",theme);
   themeLink.href = destination.href;
