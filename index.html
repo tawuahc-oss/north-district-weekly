@@ -21,7 +21,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .app{max-width:1100px;margin:auto;padding:clamp(12px,3vw,28px)}
 header{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:minmax(44px,auto) minmax(44px,auto);align-items:center;gap:6px 10px;margin-bottom:4px}
 header .actions{grid-area:1 / 2 / 3;align-self:end}
-#globalStatus{grid-area:2 / 1;margin:0}
+#globalStatus{grid-area:2 / 1;align-self:end;display:grid;align-content:center;min-height:44px;margin:0}
 header + .panel{margin-top:8px}
 .brand{font-size:.7rem;letter-spacing:.1em;color:var(--accent);font-weight:800}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -38,15 +38,16 @@ h2{font-size:1.2rem;margin:0}
 .primary{background:var(--accent);color:white;border-color:var(--accent)}
 .danger{color:var(--danger)}
 .panel{background:var(--paper);border:1px solid var(--line);border-radius:15px;padding:clamp(14px,2.5vw,22px);margin:14px 0;box-shadow:0 8px 26px #5d47210d}
-.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:7px}
 .muted{color:var(--muted);font-size:.88rem}
 .notice{padding:12px;border-radius:10px;background:var(--soft);color:var(--muted);font-size:.9rem}
-.filters{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
-.filter{display:inline-flex;align-items:center;gap:5px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 9px;font-size:.82rem}
- .filter input{accent-color:var(--cat-color,var(--accent));margin:0;width:auto}
-.filter{background:var(--cat-bg,var(--paper));border-color:var(--cat-color,var(--line));color:#423a30}
+.filters{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0}
+.filter{display:inline-flex;align-items:center;gap:5px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px 6px;font-size:.75rem}
+ .filter input{accent-color:var(--accent);margin:0;width:auto}
+.filter{background:var(--paper);color:var(--ink)}
+.filter-dot{width:7px;height:7px;flex:none;border-radius:50%;background:var(--cat-color,var(--accent))}
 .filter:has(input:not(:checked)){opacity:.48}
-body[data-theme=night] .filter{color:#302820}
+
 #calendarBtn{border:1px solid var(--line);background:var(--paper);color:var(--ink);text-decoration:none}
 
 table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
@@ -54,13 +55,13 @@ th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);vertical-
 th{background:var(--soft);font-weight:750}
 tr:last-child td{border-bottom:0}
 .weekday{white-space:nowrap;font-weight:750;width:105px}
-.event-line{padding:9px 0;border-bottom:1px dashed var(--line)}
+.event-line{padding:6px 0;border-bottom:1px dashed var(--line)}
 .event-line:last-child{border-bottom:0}
 .event-title{font-weight:750;overflow-wrap:anywhere}
 .tag{display:inline-block;font-size:.75rem;background:var(--cat-bg,var(--soft));border:1px solid var(--cat-color,var(--line));color:#423a30;border-radius:999px;padding:2px 7px;margin-right:6px}
 .event-meta{font-size:.85rem;color:var(--muted);margin-top:3px;white-space:pre-wrap;overflow-wrap:anywhere}
-.announcement{border:1px solid var(--line);border-radius:11px;padding:13px;margin:9px 0}
-.announcement h3{margin:0 0 5px;font-size:1.05rem}
+.announcement{border:1px solid var(--line);border-radius:11px;padding:8px 10px;margin:6px 0}
+.announcement h3{margin:0 0 3px;font-size:1.05rem}
 .announcement-content{white-space:pre-wrap;overflow-wrap:anywhere}
 .empty{color:var(--muted);padding:16px 0}
 .admin-panel,.login-box{display:none}
@@ -301,7 +302,7 @@ function categorySelect(id,allowBlank=false){
 }
 function filters(){
   $("categoryFilters").innerHTML=CATEGORIES.map(c=>`
-    <label class="filter" ${categoryStyle(c)}><input type="checkbox" checked value="${esc(c)}">${esc(c)}</label>`).join("");
+    <label class="filter" ${categoryStyle(c)}><input type="checkbox" checked value="${esc(c)}"><span class="filter-dot" aria-hidden="true"></span>${esc(c)}</label>`).join("");
   $("categoryFilters").addEventListener("change",e=>{
     if(!e.target.matches('input[type="checkbox"]'))return;
     if(e.target.checked)selected.add(e.target.value);else selected.delete(e.target.value);
