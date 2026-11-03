@@ -86,13 +86,9 @@ textarea{min-height:90px;resize:vertical}
 .sortable-drag{box-shadow:0 8px 24px #0002}
 footer{text-align:center;color:var(--muted);font-size:.78rem;padding:18px}
 @media(max-width:620px){
- header{grid-template-rows:auto minmax(44px,auto) minmax(44px,auto)}
- header .heading{display:contents}
- header .brand{grid-area:1 / 1 / 2 / -1;white-space:nowrap}
- header h1{grid-area:2 / 1}
- header .actions{grid-area:2 / 3 / 4}
- #globalStatus{grid-area:2 / 2}
- #globalStatus.error{grid-area:4 / 1 / 5 / -1}
+ .app{padding-top:max(8px,env(safe-area-inset-top));padding-inline:8px}
+ header{column-gap:6px}
+ header .brand{font-size:clamp(.48rem,2.65vw,.7rem);white-space:nowrap}
  .actions{gap:6px}
  form{grid-template-columns:1fr}
  .full,.form-actions{grid-column:1}
