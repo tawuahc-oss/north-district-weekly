@@ -316,6 +316,9 @@ function applyTheme(theme){
   const destination = new URL(themeLink.href);
   destination.searchParams.set("theme",theme);
   themeLink.href = destination.href;
+  const current = new URL(window.location.href);
+  current.searchParams.set("theme",theme);
+  if (current.href !== window.location.href) history.replaceState(history.state,"",current);
   try { localStorage.setItem(themeKey,theme); } catch {}
   updateThemeIcon();
 }
@@ -323,10 +326,7 @@ let savedTheme;
 try { savedTheme = localStorage.getItem(themeKey); } catch {}
 const hasIncomingTheme = incomingTheme === "day" || incomingTheme === "night";
 applyTheme(hasIncomingTheme ? incomingTheme : savedTheme === "night" ? "night" : "day");
-if(hasIncomingTheme){
-  themeUrl.searchParams.delete("theme");
-  history.replaceState(history.state,"",themeUrl);
-}
+
 $("themeBtn").onclick = () => applyTheme(document.body.dataset.theme === "night" ? "day" : "night");
 
 function categorySelect(id,allowBlank=false){
