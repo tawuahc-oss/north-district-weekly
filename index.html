@@ -303,8 +303,13 @@ function updateThemeIcon(){
   $("themeBtn").setAttribute("aria-label",label);
   $("themeBtn").title=label;
 }
+const themeKey="north-district-weekly-theme";
+try {
+  document.body.dataset.theme=localStorage.getItem(themeKey)==="night"?"night":"day";
+} catch {}
 $("themeBtn").onclick=()=>{
   document.body.dataset.theme=document.body.dataset.theme==="night"?"day":"night";
+  try { localStorage.setItem(themeKey,document.body.dataset.theme); } catch {}
   updateThemeIcon();
 };
 updateThemeIcon();
