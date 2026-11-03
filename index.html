@@ -422,7 +422,7 @@ async function load(){
     }
     weekly=wr.data||[];
     notices=nr.data||[];
-    msg("globalStatus","已更新。");
+    msg("globalStatus","已更新");
     renderWeekly();
     renderNotices();
     await syncSession();
