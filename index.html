@@ -303,16 +303,27 @@ function updateThemeIcon(){
   $("themeBtn").setAttribute("aria-label",label);
   $("themeBtn").title=label;
 }
-const themeKey="north-district-weekly-theme";
-try {
-  document.body.dataset.theme=localStorage.getItem(themeKey)==="night"?"night":"day";
-} catch {}
-$("themeBtn").onclick=()=>{
-  document.body.dataset.theme=document.body.dataset.theme==="night"?"day":"night";
-  try { localStorage.setItem(themeKey,document.body.dataset.theme); } catch {}
+const themeKey = "north-district-weekly-theme";
+const themeUrl = new URL(window.location.href);
+const incomingTheme = themeUrl.searchParams.get("theme");
+const themeLink = $("calendarBtn");
+function applyTheme(theme){
+  document.body.dataset.theme = theme;
+  const destination = new URL(themeLink.href);
+  destination.searchParams.set("theme",theme);
+  themeLink.href = destination.href;
+  try { localStorage.setItem(themeKey,theme); } catch {}
   updateThemeIcon();
-};
-updateThemeIcon();
+}
+let savedTheme;
+try { savedTheme = localStorage.getItem(themeKey); } catch {}
+const hasIncomingTheme = incomingTheme === "day" || incomingTheme === "night";
+applyTheme(hasIncomingTheme ? incomingTheme : savedTheme === "night" ? "night" : "day");
+if(hasIncomingTheme){
+  themeUrl.searchParams.delete("theme");
+  history.replaceState(history.state,"",themeUrl);
+}
+$("themeBtn").onclick = () => applyTheme(document.body.dataset.theme === "night" ? "day" : "night");
 
 function categorySelect(id,allowBlank=false){
   $(id).innerHTML=(allowBlank?'<option value="">不指定</option>':"")+
