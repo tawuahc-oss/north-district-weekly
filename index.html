@@ -365,7 +365,8 @@ async function load(){
     msg("globalStatus","正在讀取資料……");
     const [wr,nr,cr]=await Promise.all([
       db.from("weekly_events").select("*").order("weekday").order("start_time"),
-      db.from("monthly_announcements").select("*").order("sort_order",{ascending:true,nullsFirst:false}).order("start_date")
+      db.from("monthly_announcements").select("*").order("sort_order",{ascending:true,nullsFirst:false}).order("start_date"),
+      db.from("weekly_categories").select("name,color,bg,sort_order").order("sort_order")
     ]);
 
     if(wr.error||nr.error){
