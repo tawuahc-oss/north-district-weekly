@@ -238,6 +238,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding:18px}
     <form id="announcementForm">
       <input type="hidden" id="announcementId">
       <label class="full">通告標題<input id="announcementTitle" required maxlength="180"></label>
+      <label class="full">發布日期（可留空）<input id="announcementPublishDate" type="date"><span class="muted">留空即時發布。指定日期後，會於當天香港時間凌晨起公開。</span></label>
       <label>開始日期<input id="announcementStartDate" type="date" required></label>
       <label>結束日期（可留空）<input id="announcementEndDate" type="date"></label>
       <label>分類（可留空）<select id="announcementCategory"></select></label>
@@ -384,9 +385,12 @@ function renderWeekly(){
   renderWeeklyAdmin();
 }
 
+function hongKongToday(){
+  return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Hong_Kong",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+}
 function renderNotices(){
-  const today=new Date();today.setHours(0,0,0,0);
-  const active=notices.filter(x=>new Date((x.end_date||x.start_date)+"T23:59:59")>=today)
+  const today=hongKongToday();
+  const active=notices.filter(x=>(!x.publish_date||x.publish_date<=today)&&(x.end_date||x.start_date)>=today)
     .sort((a,b)=>(Number(a.sort_order??999999)-Number(b.sort_order??999999))||a.start_date.localeCompare(b.start_date));
   $("announcements").innerHTML=active.length?active.map(x=>`
     <article class="announcement">
@@ -481,7 +485,7 @@ function renderNoticeAdmin(){
   if(noticeSortable){noticeSortable.destroy();noticeSortable=null;}
   const ordered=[...notices].sort((a,b)=>(Number(a.sort_order??999999)-Number(b.sort_order??999999))||a.start_date.localeCompare(b.start_date));
   $("announcementAdminList").innerHTML=`<h3>現有特別通告</h3><div class="muted" style="margin:5px 0 8px">按住左側拖曳圖示即可調整顯示次序；放開後會自動儲存。</div>`+ordered.map(x=>`
-    <div class="admin-list-item" data-notice-id="${esc(x.id)}"><div style="display:flex;align-items:flex-start;min-width:0"><span class="drag-handle" title="拖曳以排序" aria-label="拖曳以排序">⠿</span><div><strong>${esc(x.title)}</strong><div class="muted">${esc(x.start_date)} ${esc(x.location)}</div></div></div>
+    <div class="admin-list-item" data-notice-id="${esc(x.id)}"><div style="display:flex;align-items:flex-start;min-width:0"><span class="drag-handle" title="拖曳以排序" aria-label="拖曳以排序">⠿</span><div><strong>${esc(x.title)}</strong><div class="muted">${esc(x.start_date)} ${esc(x.location)}</div><div class="muted">${x.publish_date?esc(x.publish_date)+(x.publish_date>hongKongToday()?" 待發布":" 已發布"):"即時發布"}</div></div></div>
     <div class="small-actions"><button type="button" data-ea="${esc(x.id)}">編輯</button><button type="button" class="danger" data-da="${esc(x.id)}">刪除</button></div></div>`).join("");
   const list=$("announcementAdminList");
   if(window.Sortable){
@@ -528,7 +532,9 @@ $("announcementForm").onsubmit=async e=>{
   if(!session||session.user.id!==ADMIN_UID){msg("globalStatus","請先以管理員帳戶登入。",true);return;}
   const id=v("announcementId"),start=v("announcementStartDate"),end=v("announcementEndDate")||null;
   if(end&&end<start){msg("globalStatus","結束日期不可早於開始日期。",true);return;}
-  const row={title:v("announcementTitle"),start_date:start,end_date:end,category:v("announcementCategory")||null,start_time:v("announcementStart")||null,end_time:v("announcementEnd")||null,location:v("announcementLocation"),content:v("announcementContent")};
+  const publish=v("announcementPublishDate")||null;
+  if(publish&&publish>(end||start)){msg("globalStatus","發布日期不可晚於通告結束日期（未填結束日期時，以開始日期為準）。",true);return;}
+  const row={title:v("announcementTitle"),publish_date:publish,start_date:start,end_date:end,category:v("announcementCategory")||null,start_time:v("announcementStart")||null,end_time:v("announcementEnd")||null,location:v("announcementLocation"),content:v("announcementContent")};
   if(!id)row.sort_order=(notices.reduce((max,x)=>Math.max(max,Number(x.sort_order)||0),0))+1;
   const r=id?await db.from("monthly_announcements").update(row).eq("id",id):await db.from("monthly_announcements").insert(row);
   if(r.error){msg("globalStatus","儲存失敗："+r.error.message,true);return;}
@@ -556,6 +562,7 @@ $("announcementAdminList").onclick=async e=>{
   if(b.dataset.ea){
     const x=notices.find(a=>String(a.id)===b.dataset.ea);if(!x)return;
     $("announcementId").value=x.id;$("announcementTitle").value=x.title;$("announcementStartDate").value=x.start_date;
+    $("announcementPublishDate").value=x.publish_date||"";
     $("announcementEndDate").value=x.end_date||"";$("announcementCategory").value=x.category||"";
     $("announcementStart").value=tm(x.start_time);$("announcementEnd").value=tm(x.end_time);
     $("announcementLocation").value=x.location||"";$("announcementContent").value=x.content||"";
@@ -585,7 +592,7 @@ $("loginForm").onsubmit=async e=>{
   if(r.error){msg("loginStatus","登入失敗，請檢查登入資料。",true);return;}
   if(r.data.user.id!==ADMIN_UID){await db.auth.signOut();msg("loginStatus","此帳戶沒有管理員權限。",true);return;}
   $("loginBox").classList.remove("open");$("loginPassword").value="";
-  await syncSession();msg("globalStatus","管理員登入成功。");
+  await syncSession();await load();msg("globalStatus","管理員登入成功。");
   $("adminPanel").scrollIntoView({behavior:"smooth"});
 };
 
@@ -594,7 +601,7 @@ $("logoutBtn").onclick=async()=>{
   session=null;$("adminPanel").classList.remove("open");
   $("loginBtn").setAttribute("aria-label","管理員登入");
   $("loginBtn").title="管理員登入";
-  msg("globalStatus","已登出。");
+  await load();msg("globalStatus","已登出。");
 };
 
 function fillCategoryEditor(){
@@ -643,6 +650,8 @@ categorySelect("weeklyCategory");
 categorySelect("announcementCategory",true);
 filters();
 load();
+setInterval(()=>{if(!document.hidden)load();},60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)load();});
 </script>
 </body>
 </html>
