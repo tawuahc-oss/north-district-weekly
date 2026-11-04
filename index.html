@@ -309,7 +309,13 @@ let noticeSortable=null;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const tm=t=>t?String(t).slice(0,5):"";
-const range=(a,b)=>[tm(a),tm(b)].filter(Boolean).join("–");
+function displayTime(value){
+  if(!value)return "";
+  const [hour,minute]=tm(value).split(":");
+  const hours=Number(hour);
+  return (hours%12||12)+":"+minute+" "+(hours<12?"AM":"PM");
+}
+const range=(a,b)=>[displayTime(a),displayTime(b)].filter(Boolean).join(" – ");
 
 function msg(id,message,error=false){
   $(id).textContent=message;
