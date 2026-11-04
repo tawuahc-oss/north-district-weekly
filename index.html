@@ -284,7 +284,21 @@ const DAYS = ["星期日","星期一","星期二","星期三","星期四","星�
 const configured = SUPABASE_URL.startsWith("https://") &&
   SUPABASE_PUBLISHABLE_KEY.startsWith("sb_publishable_") &&
   ADMIN_EMAIL.includes("@");
-const db = configured ? window.supabase.createClient(SUPABASE_URL.trim(),SUPABASE_PUBLISHABLE_KEY.trim()) : null;
+// Store login only in this tab. Discard the previous persistent login.
+const authStorageKey = "north-district-weekly-session";
+if(configured){
+  const legacyKey = "sb-" + new URL(SUPABASE_URL).hostname.split(".")[0] + "-auth-token";
+  try { localStorage.removeItem(legacyKey); } catch {}
+}
+const tabAuthStorage = {
+  getItem(key){ try { return sessionStorage.getItem(key); } catch { return null; } },
+  setItem(key,value){ try { sessionStorage.setItem(key,value); } catch {} },
+  removeItem(key){ try { sessionStorage.removeItem(key); } catch {} }
+};
+const db = configured ? window.supabase.createClient(
+  SUPABASE_URL.trim(), SUPABASE_PUBLISHABLE_KEY.trim(),
+  {auth:{storage:tabAuthStorage,storageKey:authStorageKey,persistSession:true}}
+) : null;
 
 let weekly=[];
 let notices=[];
