@@ -117,6 +117,9 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding:18px}
 .monthly-notices .panel-head{margin-bottom:4px}
 #announcements .announcement{padding-block:6px;margin:0}
 #announcements .announcement + .announcement{margin-top:4px}
+.admin-section > summary{cursor:pointer;font-size:1.05rem;font-weight:700;padding-block:6px}
+.admin-section[open] > summary{margin-bottom:12px}
+.admin-section + .admin-section{margin-top:10px}
 </style>
 </head>
 <body>
@@ -204,7 +207,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding:18px}
   <div class="notice">新增、編輯或刪除資料後，公眾頁面會讀取資料庫中的最新內容。</div>
 
   <section class="panel">
-    <h2 style="margin-bottom:12px">編輯每週固定聚會</h2>
+    <details id="weeklyEditor" class="admin-section"><summary>編輯每週固定聚會</summary>
     <form id="weeklyForm">
       <input type="hidden" id="weeklyId">
       <label>星期
@@ -230,11 +233,12 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding:18px}
         <button type="button" id="weeklyReset">清除表格</button>
       </div>
     </form>
-    <div id="weeklyAdminList"></div>
+    </details>
+    <details id="weeklyRecords" class="admin-section"><summary>現有每週聚會</summary><div id="weeklyAdminList"></div></details>
   </section>
 
   <section class="panel">
-    <h2 style="margin-bottom:12px">編輯每月特別通告</h2>
+    <details id="noticeEditor" class="admin-section"><summary>編輯每月特別通告</summary>
     <form id="announcementForm">
       <input type="hidden" id="announcementId">
       <label class="full">通告標題<input id="announcementTitle" required maxlength="180"></label>
@@ -251,7 +255,8 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding:18px}
         <button type="button" id="announcementReset">清除表格</button>
       </div>
     </form>
-    <div id="announcementAdminList"></div>
+    </details>
+    <details id="noticeRecords" class="admin-section"><summary>現有特別通告</summary><div id="announcementAdminList"></div></details>
   </section>
 </section>
 
@@ -475,7 +480,7 @@ async function syncSession(){
 
 function renderWeeklyAdmin(){
   if(!$("adminPanel").classList.contains("open"))return;
-  $("weeklyAdminList").innerHTML="<h3>現有每週聚會</h3>"+weekly.map(x=>`
+  $("weeklyAdminList").innerHTML=weekly.map(x=>`
     <div class="admin-list-item"><div><strong>${DAYS[Number(x.weekday)]} · ${esc(x.title)}</strong>
     <div class="muted">${esc(x.category)} ${esc(range(x.start_time,x.end_time))}</div></div>
     <div class="small-actions"><button type="button" data-ew="${esc(x.id)}">編輯</button><button type="button" class="danger" data-dw="${esc(x.id)}">刪除</button></div></div>`).join("");
@@ -484,7 +489,7 @@ function renderNoticeAdmin(){
   if(!$("adminPanel").classList.contains("open"))return;
   if(noticeSortable){noticeSortable.destroy();noticeSortable=null;}
   const ordered=[...notices].sort((a,b)=>(Number(a.sort_order??999999)-Number(b.sort_order??999999))||a.start_date.localeCompare(b.start_date));
-  $("announcementAdminList").innerHTML=`<h3>現有特別通告</h3><div class="muted" style="margin:5px 0 8px">按住左側拖曳圖示即可調整顯示次序；放開後會自動儲存。</div>`+ordered.map(x=>`
+  $("announcementAdminList").innerHTML=`<div class="muted" style="margin:5px 0 8px">按住左側拖曳圖示即可調整顯示次序；放開後會自動儲存。</div>`+ordered.map(x=>`
     <div class="admin-list-item" data-notice-id="${esc(x.id)}"><div style="display:flex;align-items:flex-start;min-width:0"><span class="drag-handle" title="拖曳以排序" aria-label="拖曳以排序">⠿</span><div><strong>${esc(x.title)}</strong><div class="muted">${esc(x.start_date)} ${esc(x.location)}</div><div class="muted">${x.publish_date?esc(x.publish_date)+(x.publish_date>hongKongToday()?" 待發布":" 已發布"):"即時發布"}</div></div></div>
     <div class="small-actions"><button type="button" data-ea="${esc(x.id)}">編輯</button><button type="button" class="danger" data-da="${esc(x.id)}">刪除</button></div></div>`).join("");
   const list=$("announcementAdminList");
@@ -548,7 +553,8 @@ $("weeklyAdminList").onclick=async e=>{
     $("weeklyId").value=x.id;$("weekday").value=x.weekday;$("weeklyCategory").value=x.category;
     $("weeklyTitle").value=x.title;$("weeklyStart").value=tm(x.start_time);$("weeklyEnd").value=tm(x.end_time);
     $("weeklyLocation").value=x.location||"";$("weeklyContact").value=x.contact_person||"";$("weeklyNotes").value=x.notes||"";
-    $("weeklyForm").scrollIntoView({behavior:"smooth"});
+    $("weeklyEditor").open=true;
+    $("weeklyEditor").scrollIntoView({behavior:"smooth"});
   }
   if(b.dataset.dw&&confirm("確定刪除此聚會？")){
     const r=await db.from("weekly_events").delete().eq("id",b.dataset.dw);
@@ -566,7 +572,8 @@ $("announcementAdminList").onclick=async e=>{
     $("announcementEndDate").value=x.end_date||"";$("announcementCategory").value=x.category||"";
     $("announcementStart").value=tm(x.start_time);$("announcementEnd").value=tm(x.end_time);
     $("announcementLocation").value=x.location||"";$("announcementContent").value=x.content||"";
-    $("announcementForm").scrollIntoView({behavior:"smooth"});
+    $("noticeEditor").open=true;
+    $("noticeEditor").scrollIntoView({behavior:"smooth"});
   }
   if(b.dataset.da&&confirm("確定刪除此通告？")){
     const r=await db.from("monthly_announcements").delete().eq("id",b.dataset.da);
