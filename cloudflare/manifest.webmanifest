@@ -1,0 +1,17 @@
+{
+  "name": "北區學生一週聚會安排",
+  "short_name": "北區週刊",
+  "lang": "zh-Hant",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f1e8",
+  "theme_color": "#f7f1e8",
+  "icons": [
+    {
+      "src": "./weekly-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "north-district-weekly",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test cloudflare/tests/weekly.test.mjs",
+    "build": "node cloudflare/build.mjs",
+    "deploy": "npm test && npm run build && wrangler deploy --config cloudflare/wrangler.jsonc --keep-vars"
+  },
+  "devDependencies": {
+    "wrangler": "4.156.0"
+  }
+}

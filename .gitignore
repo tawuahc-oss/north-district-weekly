@@ -1,0 +1,8 @@
+node_modules/
+cloudflare/public/
+cloudflare/.wrangler/
+.env*
+.dev.vars*
+*.png
+!weekly-icon-*.png
+!cloudflare/weekly-icon-*.png

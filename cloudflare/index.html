@@ -1,0 +1,675 @@
+
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f1e8">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>北區學生一週聚會安排</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="48x48" href="./weekly-icon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./weekly-icon-180.png">
+<script src="./vendor/Sortable.min.js"></script>
+<style>
+:root{--bg:#f7f1e8;--paper:#fffdf9;--ink:#3e342b;--muted:#887b6d;--line:#e5dacb;--accent:#87684a;--soft:#f0e6d9;--danger:#a33}
+body[data-theme=night]{--bg:#17191f;--paper:#22252d;--ink:#eee8df;--muted:#b3a89a;--line:#41434b;--accent:#c49a70;--soft:#30313a;--danger:#ff9a9a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer;touch-action:manipulation;border:1px solid var(--line);border-radius:9px;padding:8px 12px;background:var(--paper);color:var(--ink);font-weight:650}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{max-width:1100px;margin:auto;padding:clamp(12px,3vw,28px)}
+header{display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-rows:minmax(44px,auto) minmax(44px,auto);align-items:center;gap:6px 10px;margin-bottom:4px}
+header .actions{grid-area:1 / 3 / 3;align-self:start}
+#globalStatus{grid-area:1 / 2;align-self:end;min-height:0;margin:0;font-size:.7rem;line-height:1.2;text-align:right;max-width:10ch}
+#globalStatus.error{grid-area:3 / 1 / 4 / -1;max-width:none;text-align:left}
+header + .panel{margin-top:8px}
+.brand{font-size:.7rem;letter-spacing:.1em;color:var(--accent);font-weight:800}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+h1{font-size:clamp(1.5rem,4vmin,2.3rem);line-height:1.1;margin:2px 0 0}
+h2{font-size:1.2rem;margin:0}
+.actions{display:grid;grid-template-columns:44px 44px;gap:6px;align-items:center}
+#refreshBtn,#themeBtn,#calendarBtn,#loginBtn{width:44px;height:44px;padding:0;display:inline-flex;justify-content:center;align-items:center;border-radius:10px}
+#refreshBtn svg,#themeBtn svg,#calendarBtn svg,#loginBtn svg{width:23px;height:23px}
+#refreshBtn:hover,#themeBtn:hover,#calendarBtn:hover,#loginBtn:hover{border-color:var(--accent)}
+#refreshBtn.loading svg{animation:refresh-spin .8s linear infinite}
+#refreshBtn:disabled{cursor:wait;opacity:.65}
+@keyframes refresh-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){#refreshBtn.loading svg{animation:none}}
+.primary{background:var(--accent);color:white;border-color:var(--accent)}
+.danger{color:var(--danger)}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:15px;padding:clamp(14px,2.5vw,22px);margin:14px 0;box-shadow:0 8px 26px #5d47210d}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:7px}
+.muted{color:var(--muted);font-size:.88rem}
+.notice{padding:12px;border-radius:10px;background:var(--soft);color:var(--muted);font-size:.9rem}
+.filters{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0}
+.filter{display:inline-flex;align-items:center;gap:5px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px 6px;font-size:.75rem}
+ .filter input{accent-color:var(--accent);margin:0;width:auto}
+.filter{background:var(--paper);color:var(--ink)}
+.filter-dot{width:7px;height:7px;flex:none;border-radius:50%;background:var(--cat-color,var(--accent))}
+.filter:has(input:not(:checked)){opacity:.48}
+
+#calendarBtn{border:1px solid var(--line);background:var(--paper);color:var(--ink);text-decoration:none}
+
+table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--soft);font-weight:750}
+tr:last-child td{border-bottom:0}
+.weekday{white-space:nowrap;font-weight:750;width:105px}
+.event-line{padding:6px 0;border-bottom:1px dashed var(--line)}
+.event-line:last-child{border-bottom:0}
+.event-title{font-weight:750;overflow-wrap:anywhere}
+.tag{display:inline-block;font-size:.75rem;background:var(--cat-bg,var(--soft));border:1px solid var(--cat-color,var(--line));color:#423a30;border-radius:999px;padding:2px 7px;margin-right:6px}
+.event-meta{font-size:.85rem;color:var(--muted);margin-top:3px;white-space:pre-wrap;overflow-wrap:anywhere}
+.announcement{border:1px solid var(--line);border-radius:11px;padding:8px 10px;margin:6px 0}
+.announcement h3{margin:0 0 3px;font-size:1.05rem}
+.announcement-content{font-size:.85rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.empty{color:var(--muted);padding:16px 0}
+.admin-panel,.login-box{display:none}
+.admin-panel.open,.login-box.open{display:block}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{display:grid;gap:5px;font-size:.88rem;font-weight:650}
+input,select,textarea{width:100%;min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+textarea{min-height:90px;resize:vertical}
+.full,.form-actions{grid-column:1/-1}
+.form-actions{display:flex;gap:8px;flex-wrap:wrap}
+.status{font-size:.85rem;color:var(--muted);min-height:1.4em;margin:4px 0;overflow-wrap:anywhere}
+.status.error{color:var(--danger)}
+.admin-list-item{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-top:1px solid var(--line);padding:10px 0}
+.admin-list-item>div:first-child{min-width:0;overflow-wrap:anywhere}
+.small-actions{display:flex;gap:6px;flex-shrink:0}
+.drag-handle{display:inline-flex;align-items:center;justify-content:center;width:32px;height:34px;padding:0;margin-right:7px;border:1px solid var(--line);border-radius:8px;color:var(--muted);cursor:grab;touch-action:none;user-select:none;font-size:1.15rem;line-height:1}
+.drag-handle:active{cursor:grabbing}
+.sortable-ghost{opacity:.35;background:var(--soft)}
+.sortable-chosen{border-radius:9px}
+.sortable-drag{box-shadow:0 8px 24px #0002}
+footer{text-align:center;color:var(--muted);font-size:.78rem;padding:18px}
+@media(max-width:620px){
+ .app{padding-top:max(8px,env(safe-area-inset-top));padding-inline:8px}
+ header{column-gap:6px}
+ header .brand{font-size:clamp(.48rem,2.65vw,.7rem);white-space:nowrap}
+ .actions{gap:6px}
+ form{grid-template-columns:1fr}
+ .full,.form-actions{grid-column:1}
+ .weekday{width:78px}
+ th,td{padding:8px;font-size:.9rem}
+ .panel{padding:12px}
+ .admin-list-item{flex-direction:column}
+ .small-actions{align-self:flex-end}
+}
+@media screen and (orientation:landscape){
+ .app{
+  --page-padding:clamp(12px,3vw,28px);
+  padding-top:max(var(--page-padding),env(safe-area-inset-top));
+  padding-right:max(var(--page-padding),env(safe-area-inset-right));
+  padding-bottom:max(var(--page-padding),env(safe-area-inset-bottom));
+  padding-left:max(var(--page-padding),env(safe-area-inset-left));
+ }
+}
+#weeklyBody td{padding-block:5px}
+#weeklyBody .event-line{padding-block:3px;line-height:1.35}
+#weeklyBody .event-line:first-child{padding-top:0}
+#weeklyBody .event-line:last-child{padding-bottom:0}
+#weeklyBody .event-meta{margin-top:1px}
+#weeklyBody .empty{padding-block:2px}
+.panel.monthly-notices{padding-block:10px}
+.monthly-notices .panel-head{margin-bottom:4px}
+#announcements .announcement{padding-block:6px;margin:0}
+#announcements .announcement + .announcement{margin-top:4px}
+.admin-section > summary{cursor:pointer;font-size:1.05rem;font-weight:700;padding-block:6px}
+.admin-section[open] > summary{margin-bottom:12px}
+.admin-section + .admin-section{margin-top:10px}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="heading">
+    <div class="brand">THE CHURCH OF GOD IN HONG KONG</div>
+    <h1>北區學生一週聚會安排</h1>
+  </div>
+  <div class="actions">
+    <button id="refreshBtn" type="button" aria-label="重新整理資料" title="重新整理資料">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20 7v5h-5"></path>
+        <path d="M4 17v-5h5"></path>
+        <path d="M5.6 9a7 7 0 0 1 11.6-2L20 12"></path>
+        <path d="M4 12l2.8 5a7 7 0 0 0 11.6-2"></path>
+      </svg>
+    </button>
+    <button id="themeBtn" type="button" aria-label="切換夜間模式" title="切換夜間模式">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
+    </button>
+    <a id="calendarBtn" href="https://nds-cal.tawuahc.workers.dev/" title="前往教會月曆" aria-label="前往教會月曆">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M7 3v4 M17 3v4 M3 10h18 M8 14h2 M14 14h2 M8 18h2"></path>
+      </svg>
+    </a>
+    <button id="loginBtn" type="button" aria-label="管理員登入" title="管理員登入">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="8" cy="15" r="5"></circle>
+        <path d="m11.5 11.5 8-8 2 2-2 2 1.5 1.5-2.5 2.5L17 10.5l-2 2"></path>
+      </svg>
+    </button>
+  </div>
+<div id="globalStatus" class="status" role="status" aria-live="polite"></div>
+</header>
+<div id="migrationNotice" class="notice" hidden>週刊已轉移至新服務，原有聚會及通告正在補回。</div>
+<div id="cacheNotice" class="notice" role="status" hidden></div>
+
+<section class="panel monthly-notices">
+  <div class="panel-head"><h2>每月特別通告</h2></div>
+  <div id="announcements"><div class="empty">正在載入通告……</div></div>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>一週聚會恆常安排</h2>
+    <span class="muted">按分類篩選</span>
+  </div>
+  <div id="categoryFilters" class="filters"></div>
+  <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>星期</th><th>聚會詳情</th></tr></thead>
+      <tbody id="weeklyBody"><tr><td colspan="2">正在載入聚會……</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="loginBox" class="panel login-box">
+  <div class="panel-head">
+    <h2>管理員登入</h2>
+    <button id="closeLogin" type="button">關閉</button>
+  </div>
+  <p class="muted">使用月曆網站的管理員帳戶及密碼登入。</p>
+  <form id="loginForm">
+    <label class="full">使用者名稱
+      <input id="loginUsername" autocomplete="username" required>
+    </label>
+    <label class="full">密碼
+      <input id="loginPassword" type="password" autocomplete="current-password" required>
+    </label>
+    <div class="form-actions"><button class="primary" type="submit">登入</button></div>
+  </form>
+  <div id="loginStatus" class="status" role="status" aria-live="polite"></div>
+</section>
+
+<section id="adminPanel" class="panel admin-panel">
+  <details><summary>管理分類</summary><form id="categoryEditor">
+    <label>分類<select id="categoryToEdit" required></select></label>
+    <label>名稱<input id="categoryName" required maxlength="60"></label>
+    <label>顏色<input id="categoryColor" type="color" required></label>
+    <div class="form-actions"><button type="submit" id="saveCategory">新增分類</button> <button type="submit" id="deleteCategory" formnovalidate disabled>刪除分類</button></div>
+    <p id="categoryStatus" class="status full" role="status"></p>
+  </form></details>
+  <div class="panel-head">
+    <h2>管理員編輯區</h2>
+    <button id="logoutBtn" type="button" aria-label="登出" title="登出"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/></svg></button>
+  </div>
+  <div class="notice">新增、編輯或刪除資料後，公眾頁面會讀取最新內容。</div>
+  <details class="admin-section"><summary>備份及資料維護</summary>
+   <p class="muted">備份包含聚會、通告及分類，不包含密碼或登入資料。匯入以相同識別碼更新，其他資料會保留。</p>
+   <div class="form-actions"><button type="button" id="exportBackup">下載完整備份</button><label>匯入 JSON 備份<input type="file" id="importBackup" accept=".json,application/json"></label><button type="button" id="finishMigration">資料已補回，隱藏重建提示</button><button type="button" id="archiveOld">封存兩年前的通告</button></div>
+   <p class="muted">封存會先下載備份，再確認清理已結束超過兩年的通告。固定聚會與生日規則會保留。</p><p id="backupStatus" role="status"></p>
+  </details>
+
+  <section class="panel">
+    <details id="weeklyEditor" class="admin-section"><summary>編輯每週固定聚會</summary>
+    <form id="weeklyForm">
+      <input type="hidden" id="weeklyId">
+      <label>星期
+        <select id="weekday">
+          <option value="0">星期日</option>
+          <option value="1">星期一</option>
+          <option value="2">星期二</option>
+          <option value="3">星期三</option>
+          <option value="4">星期四</option>
+          <option value="5">星期五</option>
+          <option value="6">星期六</option>
+        </select>
+      </label>
+      <label>分類<select id="weeklyCategory"></select></label>
+      <label class="full">聚會名稱<input id="weeklyTitle" required maxlength="160"></label>
+      <label>開始時間<input id="weeklyStart" type="time"></label>
+      <label>結束時間<input id="weeklyEnd" type="time"></label>
+      <label>地點<input id="weeklyLocation" maxlength="200"></label>
+      <label>聯絡人<input id="weeklyContact" maxlength="120"></label>
+      <label class="full">補充資料<textarea id="weeklyNotes" maxlength="2000"></textarea></label>
+      <div class="form-actions">
+        <button class="primary" type="submit">儲存聚會</button>
+        <button type="button" id="weeklyReset">清除表格</button>
+      </div>
+    </form>
+    </details>
+    <details id="weeklyRecords" class="admin-section"><summary>現有每週聚會</summary><div id="weeklyAdminList"></div></details>
+  </section>
+
+  <section class="panel">
+    <details id="noticeEditor" class="admin-section"><summary>編輯每月特別通告</summary>
+    <form id="announcementForm">
+      <input type="hidden" id="announcementId">
+      <label class="full">通告標題<input id="announcementTitle" required maxlength="180"></label>
+      <label class="full">發布日期（可留空）<input id="announcementPublishDate" type="date"><span class="muted">留空即時發布。指定日期後，會於當天香港時間凌晨起公開。</span></label>
+      <label>開始日期<input id="announcementStartDate" type="date" required></label>
+      <label>結束日期（可留空）<input id="announcementEndDate" type="date"></label>
+      <label>分類（可留空）<select id="announcementCategory"></select></label>
+      <label>開始時間<input id="announcementStart" type="time"></label>
+      <label>結束時間<input id="announcementEnd" type="time"></label>
+      <label class="full">地點<input id="announcementLocation" maxlength="200"></label>
+      <label class="full">通告內容<textarea id="announcementContent" maxlength="5000"></textarea></label>
+      <div class="form-actions">
+        <button class="primary" type="submit">儲存通告</button>
+        <button type="button" id="announcementReset">清除表格</button>
+      </div>
+    </form>
+    </details>
+    <details id="noticeRecords" class="admin-section"><summary>現有特別通告</summary><div id="announcementAdminList"></div></details>
+  </section>
+</section>
+
+<footer>北區學生一週聚會安排</footer>
+</div>
+
+<script>
+
+const ADMIN_USERNAME = "admin";
+const ADMIN_UID = "calendar-admin";
+let CATEGORY_COLORS = {
+  "全教會":   {color:"#78B54C",bg:"#EDF6E6"},
+  "區":       {color:"#A68BD5",bg:"#F1ECFA"},
+  "親主Team": {color:"#C18B12",bg:"#FFF3CD"},
+  "周間小組": {color:"#E0A316",bg:"#FFF7DC"},
+  "愛筵":     {color:"#F0BD4E",bg:"#FFF9E9"},
+  "學生聚會": {color:"#1698D0",bg:"#E6F5FC"},
+  "同工相聚": {color:"#E47772",bg:"#FCECEB"},
+  "預工":     {color:"#7C9C9A",bg:"#EAF2F1"}
+};
+let CATEGORIES = Object.keys(CATEGORY_COLORS);
+function categoryStyle(category){
+  const c=CATEGORY_COLORS[category];
+  return c?`style="--cat-color:${c.color};--cat-bg:${c.bg}"`:"";
+}
+const DAYS = ["星期日","星期一","星期二","星期三","星期四","星期五","星期六"];
+async function api(path,options={}){
+  const response=await fetch(path,{...options,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json',...options.headers}});
+  const result=await response.json();
+  if(!response.ok)throw Object.assign(new Error(result.error||'連線失敗，請稍後再試。'),{code:result.code,status:response.status});
+  return result;
+}
+const post=(path,value)=>api(path,{method:'POST',body:JSON.stringify(value)});
+const db={
+ auth:{
+  async getSession(){const result=await api('/api/admin/session');return {data:{session:result.authenticated?{user:{id:ADMIN_UID}}:null}};},
+  async signInWithPassword({password}){try{await post('/api/admin/login',{username:$('loginUsername').value.trim(),password});return {data:{user:{id:ADMIN_UID}}};}catch(error){return {error};}},
+  signOut(){return post('/api/admin/logout',{});}
+ },
+ from(table){
+  const query={method:null,row:null,key:null,
+   insert(row){this.method='POST';this.row=row;return this;},
+   update(row){this.method='PUT';this.row=row;return this;},
+   delete(){this.method='DELETE';return this;},
+   eq(field,key){this.key=key;return this;},
+   select(){return this;},single(){return this;},
+   async then(resolve,reject){try{const result=await api('/api/admin/'+table+(this.key!==null?'/'+encodeURIComponent(this.key):''),{method:this.method,body:this.row?JSON.stringify(this.row):undefined});return resolve({data:result.data});}catch(error){return resolve({error});}}
+  };return query;
+ }
+};
+const publicCacheKey='nds-weekly-public-v1';
+function migrationMessage(pending){$('migrationNotice').hidden=!pending;}
+let weekly=[];
+let notices=[];
+let session=null;
+let selected=new Set(CATEGORIES);
+let loading=false;
+let noticeSortable=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const tm=t=>t?String(t).slice(0,5):"";
+function displayTime(value){
+  if(!value)return "";
+  const [hour,minute]=tm(value).split(":");
+  const hours=Number(hour);
+  return (hours%12||12)+":"+minute+" "+(hours<12?"AM":"PM");
+}
+const range=(a,b)=>[displayTime(a),displayTime(b)].filter(Boolean).join(" – ");
+
+function msg(id,message,error=false){
+  $(id).textContent=message;
+  $(id).classList.toggle("error",error);
+}
+
+function updateThemeIcon(){
+  const night=document.body.dataset.theme==="night";
+  $("themeIcon").innerHTML=night
+    ? '<path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path>'
+    : '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2 M12 20v2 M4.93 4.93l1.42 1.42 M17.65 17.65l1.42 1.42 M2 12h2 M20 12h2 M4.93 19.07l1.42-1.42 M17.65 6.35l1.42-1.42"></path>';
+  const label=night?"切換日間模式":"切換夜間模式";
+  $("themeBtn").setAttribute("aria-label",label);
+  $("themeBtn").title=label;
+}
+const themeKey = "north-district-weekly-theme";
+const themeUrl = new URL(window.location.href);
+const incomingTheme = themeUrl.searchParams.get("theme");
+const themeLink = $("calendarBtn");
+function applyTheme(theme){
+  document.body.dataset.theme = theme;
+  document.querySelector('meta[name="theme-color"]').content =
+    getComputedStyle(document.body).getPropertyValue("--bg").trim();
+  const destination = new URL(themeLink.href);
+  destination.searchParams.set("theme",theme);
+  themeLink.href = destination.href;
+  const current = new URL(window.location.href);
+  current.searchParams.set("theme",theme);
+  if (current.href !== window.location.href) history.replaceState(history.state,"",current);
+  try { localStorage.setItem(themeKey,theme); } catch {}
+  updateThemeIcon();
+}
+let savedTheme;
+try { savedTheme = localStorage.getItem(themeKey); } catch {}
+const hasIncomingTheme = incomingTheme === "day" || incomingTheme === "night";
+applyTheme(hasIncomingTheme ? incomingTheme : savedTheme === "night" ? "night" : "day");
+
+$("themeBtn").onclick = () => applyTheme(document.body.dataset.theme === "night" ? "day" : "night");
+
+function categorySelect(id,allowBlank=false){
+  $(id).innerHTML=(allowBlank?'<option value="">不指定</option>':"")+
+    CATEGORIES.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
+}
+function filters(){
+  $("categoryFilters").innerHTML=CATEGORIES.map(c=>`
+    <label class="filter" ${categoryStyle(c)}><input type="checkbox" ${selected.has(c)?"checked":""} value="${esc(c)}"><span class="filter-dot" aria-hidden="true"></span>${esc(c)}</label>`).join("");
+  $("categoryFilters").onchange=e=>{
+    if(!e.target.matches('input[type="checkbox"]'))return;
+    if(e.target.checked)selected.add(e.target.value);else selected.delete(e.target.value);
+    renderWeekly();
+  };
+}
+
+function renderWeekly(){
+  $("weeklyBody").innerHTML=DAYS.map((day,i)=>{
+    const events=weekly.filter(x=>Number(x.weekday)===i&&selected.has(x.category))
+      .sort((a,b)=>(a.start_time||"").localeCompare(b.start_time||""));
+    const details=events.length?events.map(x=>`
+      <div class="event-line">
+        <div class="event-title"><span class="tag" ${categoryStyle(x.category)}>${esc(x.category)}</span>${esc(x.title)}</div>
+        ${[range(x.start_time,x.end_time),x.location,x.contact_person?"聯絡："+x.contact_person:""].filter(Boolean).length?`<div class="event-meta">${esc([range(x.start_time,x.end_time),x.location,x.contact_person?"聯絡："+x.contact_person:""].filter(Boolean).join("　·　"))}</div>`:""}
+        ${x.notes?`<div class="event-meta">${esc(x.notes)}</div>`:""}
+      </div>`).join(""):'<span class="muted">暫無安排</span>';
+    return `<tr><td class="weekday">${day}</td><td>${details}</td></tr>`;
+  }).join("");
+  renderWeeklyAdmin();
+}
+
+function hongKongToday(){
+  return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Hong_Kong",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+}
+function renderNotices(){
+  const today=hongKongToday();
+  const active=notices.filter(x=>(!x.publish_date||x.publish_date<=today)&&(x.end_date||x.start_date)>=today)
+    .sort((a,b)=>(Number(a.sort_order??999999)-Number(b.sort_order??999999))||a.start_date.localeCompare(b.start_date));
+  $("announcements").innerHTML=active.length?active.map(x=>`
+    <article class="announcement">
+      <h3>${esc(x.title)}</h3>
+      ${range(x.start_time,x.end_time)||x.location?`<div class="event-meta">${esc([range(x.start_time,x.end_time),x.location].filter(Boolean).join("　·　"))}</div>`:""}
+      ${x.category?`<div style="margin:7px 0"><span class="tag" ${categoryStyle(x.category)}>${esc(x.category)}</span></div>`:""}
+      ${x.content?`<div class="announcement-content">${esc(x.content)}</div>`:""}
+    </article>`).join(""):'<div class="empty">目前沒有特別通告。</div>';
+  renderNoticeAdmin();
+}
+
+async function load(){
+  if(loading)return;
+  loading=true;
+  const btn=$("refreshBtn");
+  btn.disabled=true;
+  btn.classList.add("loading");
+  btn.setAttribute("aria-busy","true");
+
+  try{
+    msg("globalStatus","正在讀取資料……");
+    let publicData;
+    try{
+      publicData=await api('/api/public');
+      try{localStorage.setItem(publicCacheKey,JSON.stringify(publicData));}catch{}
+    }catch(error){
+      try{publicData=JSON.parse(localStorage.getItem(publicCacheKey));}catch{}
+      if(!publicData)throw error;
+      publicData.stale=true;
+    }
+    migrationMessage(publicData.migration_pending);
+    try{await syncSession();}catch{session=null;$("adminPanel").classList.remove("open");}
+    let source=publicData;
+    if(session)source=await api('/api/admin/data');
+    const wr={data:source.weekly_events},nr={data:source.monthly_announcements},cr={data:source.weekly_categories};
+    if(!cr.error){
+      const previous = CATEGORIES;
+      CATEGORY_COLORS = Object.fromEntries(cr.data.map(row=>[row.name,row]));
+      CATEGORIES = Object.keys(CATEGORY_COLORS);
+      selected = new Set(CATEGORIES.filter(name=>selected.has(name)||!previous.includes(name)));
+      for(const [id,blank] of [["weeklyCategory",false],["announcementCategory",true],["categoryToEdit",true]]){
+        const value = $(id).value;
+        categorySelect(id,blank);
+        if(CATEGORIES.includes(value))$(id).value=value;
+        if(id==="categoryToEdit")$(id).options[0].textContent="＋ 新增分類";
+      }
+      fillCategoryEditor();
+      filters();
+    }
+    weekly=wr.data||[];
+    notices=nr.data||[];
+    msg("globalStatus",publicData.stale?"顯示上次資料":"已更新");
+    $("cacheNotice").hidden=!publicData.stale;
+    $("cacheNotice").textContent=publicData.stale?"目前連線不穩，顯示 "+new Date(publicData.updated_at).toLocaleString("zh-HK")+" 的資料。":"";
+    renderWeekly();
+    renderNotices();
+  }catch(error){
+    msg("globalStatus","讀取失敗："+(error?.message||"請檢查網絡連線。"),true);
+  }finally{
+    loading=false;
+    btn.disabled=false;
+    btn.classList.remove("loading");
+    btn.removeAttribute("aria-busy");
+  }
+}
+
+async function syncSession(){
+  if(!db)return;
+  const result=await db.auth.getSession();
+  session=result.data.session;
+  const isAdmin=!!session&&session.user.id===ADMIN_UID;
+  $("adminPanel").classList.toggle("open",isAdmin);
+  $("loginBtn").setAttribute("aria-label",isAdmin?"管理員已登入":"管理員登入");
+  $("loginBtn").title=isAdmin?"管理員已登入":"管理員登入";
+  if(isAdmin){renderWeeklyAdmin();renderNoticeAdmin();}
+}
+
+function renderWeeklyAdmin(){
+  if(!$("adminPanel").classList.contains("open"))return;
+  $("weeklyAdminList").innerHTML=weekly.map(x=>`
+    <div class="admin-list-item"><div><strong>${DAYS[Number(x.weekday)]} · ${esc(x.title)}</strong>
+    <div class="muted">${esc(x.category)} ${esc(range(x.start_time,x.end_time))}</div></div>
+    <div class="small-actions"><button type="button" data-ew="${esc(x.id)}">編輯</button><button type="button" class="danger" data-dw="${esc(x.id)}">刪除</button></div></div>`).join("");
+}
+function renderNoticeAdmin(){
+  if(!$("adminPanel").classList.contains("open"))return;
+  if(noticeSortable){noticeSortable.destroy();noticeSortable=null;}
+  const ordered=[...notices].sort((a,b)=>(Number(a.sort_order??999999)-Number(b.sort_order??999999))||a.start_date.localeCompare(b.start_date));
+  $("announcementAdminList").innerHTML=`<div class="muted" style="margin:5px 0 8px">按住左側拖曳圖示即可調整顯示次序；放開後會自動儲存。</div>`+ordered.map(x=>`
+    <div class="admin-list-item" data-notice-id="${esc(x.id)}"><div style="display:flex;align-items:flex-start;min-width:0"><span class="drag-handle" title="拖曳以排序" aria-label="拖曳以排序">⠿</span><div><strong>${esc(x.title)}</strong><div class="muted">${esc(x.start_date)} ${esc(x.location)}</div><div class="muted">${x.publish_date?esc(x.publish_date)+(x.publish_date>hongKongToday()?" 待發布":" 已發布"):"即時發布"}</div></div></div>
+    <div class="small-actions"><button type="button" data-ea="${esc(x.id)}">編輯</button><button type="button" class="danger" data-da="${esc(x.id)}">刪除</button></div></div>`).join("");
+  const list=$("announcementAdminList");
+  if(window.Sortable){
+    noticeSortable=Sortable.create(list,{animation:160,handle:".drag-handle",draggable:".admin-list-item",ghostClass:"sortable-ghost",chosenClass:"sortable-chosen",onEnd:saveNoticeOrder});
+  }
+}
+
+async function saveNoticeOrder(){
+  if(!session||session.user.id!==ADMIN_UID)return;
+  const rows=[...$("announcementAdminList").querySelectorAll(".admin-list-item")];
+  const updates=rows.map((el,index)=>db.from("monthly_announcements").update({sort_order:index+1}).eq("id",el.dataset.noticeId));
+  msg("globalStatus","正在儲存通告次序……");
+  try{
+    const results=await Promise.all(updates);
+    const failed=results.find(r=>r.error);
+    if(failed){msg("globalStatus","排序儲存失敗："+failed.error.message,true);await load();return;}
+    rows.forEach((el,index)=>{const item=notices.find(x=>String(x.id)===el.dataset.noticeId);if(item)item.sort_order=index+1;});
+    renderNotices();
+    msg("globalStatus","通告次序已儲存。");
+  }catch(error){
+    msg("globalStatus","排序儲存失敗："+(error?.message||"請稍後再試。"),true);
+    await load();
+  }
+}
+
+const v=id=>$(id).value.trim();
+function resetW(){$("weeklyForm").reset();$("weeklyId").value="";}
+function resetA(){$("announcementForm").reset();$("announcementId").value="";}
+$("weeklyReset").onclick=resetW;
+$("announcementReset").onclick=resetA;
+
+$("weeklyForm").onsubmit=async e=>{
+  e.preventDefault();
+  if(!session||session.user.id!==ADMIN_UID){msg("globalStatus","請先以管理員帳戶登入。",true);return;}
+  const id=v("weeklyId");
+  const row={weekday:Number(v("weekday")),category:v("weeklyCategory"),title:v("weeklyTitle"),start_time:v("weeklyStart")||null,end_time:v("weeklyEnd")||null,location:v("weeklyLocation"),contact_person:v("weeklyContact"),notes:v("weeklyNotes")};
+  const r=id?await db.from("weekly_events").update(row).eq("id",id):await db.from("weekly_events").insert(row);
+  if(r.error){msg("globalStatus","儲存失敗："+r.error.message,true);return;}
+  resetW();await load();msg("globalStatus","聚會資料已儲存。");
+};
+
+$("announcementForm").onsubmit=async e=>{
+  e.preventDefault();
+  if(!session||session.user.id!==ADMIN_UID){msg("globalStatus","請先以管理員帳戶登入。",true);return;}
+  const id=v("announcementId"),start=v("announcementStartDate"),end=v("announcementEndDate")||null;
+  if(end&&end<start){msg("globalStatus","結束日期不可早於開始日期。",true);return;}
+  const publish=v("announcementPublishDate")||null;
+  if(publish&&publish>(end||start)){msg("globalStatus","發布日期不可晚於通告結束日期（未填結束日期時，以開始日期為準）。",true);return;}
+  const row={title:v("announcementTitle"),publish_date:publish,start_date:start,end_date:end,category:v("announcementCategory")||null,start_time:v("announcementStart")||null,end_time:v("announcementEnd")||null,location:v("announcementLocation"),content:v("announcementContent")};
+  if(!id)row.sort_order=(notices.reduce((max,x)=>Math.max(max,Number(x.sort_order)||0),0))+1;
+  const r=id?await db.from("monthly_announcements").update(row).eq("id",id):await db.from("monthly_announcements").insert(row);
+  if(r.error){msg("globalStatus","儲存失敗："+r.error.message,true);return;}
+  resetA();await load();msg("globalStatus","通告已儲存。");
+};
+
+$("weeklyAdminList").onclick=async e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.ew){
+    const x=weekly.find(a=>String(a.id)===b.dataset.ew);if(!x)return;
+    $("weeklyId").value=x.id;$("weekday").value=x.weekday;$("weeklyCategory").value=x.category;
+    $("weeklyTitle").value=x.title;$("weeklyStart").value=tm(x.start_time);$("weeklyEnd").value=tm(x.end_time);
+    $("weeklyLocation").value=x.location||"";$("weeklyContact").value=x.contact_person||"";$("weeklyNotes").value=x.notes||"";
+    $("weeklyEditor").open=true;
+    $("weeklyEditor").scrollIntoView({behavior:"smooth"});
+  }
+  if(b.dataset.dw&&confirm("確定刪除此聚會？")){
+    const r=await db.from("weekly_events").delete().eq("id",b.dataset.dw);
+    if(r.error)msg("globalStatus","刪除失敗："+r.error.message,true);
+    else{await load();msg("globalStatus","聚會已刪除。");}
+  }
+};
+
+$("announcementAdminList").onclick=async e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.ea){
+    const x=notices.find(a=>String(a.id)===b.dataset.ea);if(!x)return;
+    $("announcementId").value=x.id;$("announcementTitle").value=x.title;$("announcementStartDate").value=x.start_date;
+    $("announcementPublishDate").value=x.publish_date||"";
+    $("announcementEndDate").value=x.end_date||"";$("announcementCategory").value=x.category||"";
+    $("announcementStart").value=tm(x.start_time);$("announcementEnd").value=tm(x.end_time);
+    $("announcementLocation").value=x.location||"";$("announcementContent").value=x.content||"";
+    $("noticeEditor").open=true;
+    $("noticeEditor").scrollIntoView({behavior:"smooth"});
+  }
+  if(b.dataset.da&&confirm("確定刪除此通告？")){
+    const r=await db.from("monthly_announcements").delete().eq("id",b.dataset.da);
+    if(r.error)msg("globalStatus","刪除失敗："+r.error.message,true);
+    else{await load();msg("globalStatus","通告已刪除。");}
+  }
+};
+
+$("refreshBtn").addEventListener("click",()=>window.location.reload());
+
+$("loginBtn").onclick=()=>{
+  if(session&&session.user.id===ADMIN_UID){$("adminPanel").scrollIntoView({behavior:"smooth"});return;}
+  $("loginBox").classList.add("open");
+  $("loginBox").scrollIntoView({behavior:"smooth"});
+};
+$("closeLogin").onclick=()=>$("loginBox").classList.remove("open");
+
+$("loginForm").onsubmit=async e=>{
+  e.preventDefault();
+  
+  if(v("loginUsername")!==ADMIN_USERNAME){msg("loginStatus","使用者名稱或密碼不正確。",true);return;}
+  const r=await db.auth.signInWithPassword({password:$("loginPassword").value});
+  if(r.error){msg("loginStatus",r.error.message||"登入失敗，請檢查登入資料。",true);return;}
+  if(r.data.user.id!==ADMIN_UID){await db.auth.signOut();msg("loginStatus","此帳戶沒有管理員權限。",true);return;}
+  $("loginBox").classList.remove("open");$("loginPassword").value="";
+  await load();msg("globalStatus","管理員登入成功。");
+  $("adminPanel").scrollIntoView({behavior:"smooth"});
+};
+
+$("logoutBtn").onclick=async()=>{
+  if(db)await db.auth.signOut();
+  session=null;$("adminPanel").classList.remove("open");
+  $("loginBtn").setAttribute("aria-label","管理員登入");
+  $("loginBtn").title="管理員登入";
+  await load();msg("globalStatus","已登出。");
+};
+
+function fillCategoryEditor(){
+  const name = $("categoryToEdit").value;
+  $("categoryName").value = name;
+  $("saveCategory").textContent = name ? "儲存分類" : "新增分類";
+  $("deleteCategory").disabled = !name;
+  $("categoryColor").value = CATEGORY_COLORS[name]?.color || "#87684a";
+}
+$("categoryToEdit").onchange = fillCategoryEditor;
+$("categoryEditor").onsubmit = async event => {
+  event.preventDefault();
+  if(session?.user.id !== ADMIN_UID || $("saveCategory").disabled)return;
+  const original = $("categoryToEdit").value;
+  const deleting = event.submitter?.id === "deleteCategory";
+  const name = $("categoryName").value.trim();
+  const color = $("categoryColor").value;
+  if(deleting && (!original || !confirm("確定刪除分類「"+original+"」？")))return;
+  if(!deleting && !name){msg("categoryStatus","請輸入分類名稱。",true);return;}
+  $("saveCategory").disabled = true;
+  $("deleteCategory").disabled = true;
+  try {
+    const table = db.from("weekly_categories");
+    const existing = CATEGORY_COLORS[original];
+    const values = {name,color,bg:existing?.color.toLowerCase()===color.toLowerCase()?existing.bg:"#ffffff"};
+    let request;
+    if(deleting)request=table.delete().eq("name",original);
+    else if(original)request=table.update(values).eq("name",original);
+    else request=table.insert(values);
+    const {error} = await request.select("name").single();
+    if(error)throw error;
+    await load();
+    $("categoryToEdit").value = deleting ? "" : name;
+    fillCategoryEditor();
+    msg("categoryStatus",deleting?"分類已刪除。":original?"分類已更新。":"分類已新增。");
+  } catch(error){
+    const message = error.code==="23503" ? "仍有聚會或通告使用此分類，請先改派分類。" :
+      error.code==="23505" ? "此分類名稱已存在。" : "操作失敗，請重新整理後再試。";
+    msg("categoryStatus",message,true);
+  } finally {
+    $("saveCategory").disabled = false;
+    $("deleteCategory").disabled = !$("categoryToEdit").value;
+  }
+};
+function downloadJSON(data,name){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+$('exportBackup').onclick=async()=>{try{downloadJSON(await api('/api/admin/export'),'nds-weekly-'+hongKongToday()+'.json');msg('backupStatus','備份已下載，請妥善保存。');}catch(error){msg('backupStatus',error.message,true);}};
+$('importBackup').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>500000)throw new Error('備份過大，請分批匯入。');const input=JSON.parse(await file.text());if(!confirm('匯入會更新相同識別碼的資料，是否繼續？'))return;await post('/api/admin/import',input);await load();msg('backupStatus','備份已匯入。');}catch(error){msg('backupStatus',error.message,true);}finally{e.target.value='';}};
+$('finishMigration').onclick=async()=>{try{if(!confirm('確定已核對聚會和通告，並隱藏重建提示？'))return;await post('/api/admin/confirm-migration',{});await load();}catch(error){msg('backupStatus',error.message,true);}};
+$('archiveOld').onclick=async()=>{try{const archive=await api('/api/admin/retention');if(!archive.monthly_announcements.length){msg('backupStatus','沒有需要封存的通告。');return;}downloadJSON(await api('/api/admin/export'),'nds-weekly-before-archive-'+hongKongToday()+'.json');if(!confirm('請確認備份已成功下載及保存。是否清理已結束超過兩年的 '+archive.monthly_announcements.length+' 則通告？'))return;const result=await post('/api/admin/retention',{backup_downloaded:true});await load();msg('backupStatus','已封存並清理 '+result.deleted+' 則通告。');}catch(error){msg('backupStatus',error.message,true);}};
+categorySelect("weeklyCategory");
+categorySelect("announcementCategory",true);
+filters();
+load();
+setInterval(()=>{if(!document.hidden)load();},60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)load();});
+</script>
+</body>
+</html>

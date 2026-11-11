@@ -1,0 +1,38 @@
+# 北區週刊 Cloudflare 版本
+
+正式網站：https://nds-weekly.tawuahc.workers.dev/
+
+使用現有 Cloudflare 帳戶的 Workers / D1 免費方案，未開通付費服務。訪客版面沿用原週刊；主頁及資產由同一 Worker 提供。資料庫 `nds-weekly` 與月曆 `nds-cal` 分開。
+
+## 管理員
+
+按右上方鎖匙，使用**月曆的使用者名稱和密碼**。本服務透過 `AUTH_SERVICE` 服務綁定呼叫月曆既有的登入、驗證及登出 API，不複製密碼。登入資訊存於 Secure / HttpOnly / SameSite=Strict cookie，JavaScript 無法讀取。每次管理操作均由後端驗證；登出會撤銷該次登入。
+
+訪客只能讀取已發布且未結束的通告；未來發布內容不會送到訪客瀏覽器或公開快取。管理員能看到保留的全部通告。
+
+## 舊資料與備份
+
+Supabase 專案 `ozoelkflqwwwypunrori` 的資料在重建時仍無法取出，**沒有假設已成功遷移**。新資料庫只預設八個原有分類，沒有虛構聚會和通告。頁面會提示原有資料正在補回，管理員核對完成後可隱藏提示。
+
+管理區「備份及資料維護」可下載完整 JSON、匯入同格式 JSON，或匯入含 `weekly_events`、`monthly_announcements`、`weekly_categories` 三個陣列的 Supabase 匯出。識別碼相同會更新；其他紀錄保留。匯入在同一交易完成。備份不含密碼、登入 token 或登入嘗試。
+
+「封存兩年前的通告」先下載完整備份，再要求確認清理已結束超過兩年的通告。**不會自動永久刪除資料**；固定聚會不會按建立日期清掉。請定期保存下載的備份到其他位置。D1 免費方案另外提供七天 Time Travel 還原。
+
+公開 API 讀取失敗時，會嘗試最近六小時內的 Cloudflare 節點快取；瀏覽器亦保留最近成功的公開資料，並明示更新時間。快取不保證永久存在，也不等同離線備份。當天已結束的通告仍會由前端過濾。
+
+## 維護指令
+
+在 repository 根目錄執行 `npm ci`，再使用：
+
+* `npm test`：在記憶體 SQLite 測試權限、CRUD、發布日期、交易還原與封存。
+* `npm run build`：檢查前端 JavaScript，僅複製允許的公開資產到 `cloudflare/public`。
+* `npm run deploy`：測試及建置後發布週刊，不會重新套用資料庫 migration。
+* 新環境首次建立時：`npx wrangler d1 migrations apply DB --remote --config cloudflare/wrangler.jsonc`。
+
+不要把資料庫備份、`.env`、瀏覽器 cookie 或密碼放進 Git。排序元件固定 SortableJS 1.15.6（MIT），由網站本身提供，不依賴外部 CDN。
+
+## 已知限制
+
+免費方案有流量及查詢額度；任何平台均不能保證零停機。月曆登入服務故障會影響管理員登入及編輯，公開週刊仍使用自己的獨立資料庫。
+
+重建時已完成九項後端測試及正式版公開 API / 未登入保護測試；沒有使用管理員真實密碼進行正式登入測試。
