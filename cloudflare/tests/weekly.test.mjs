@@ -7,6 +7,19 @@ async function call(env,path,{method='GET',body,cookie,origin=base}={}){return w
 async function login(env){const r=await call(env,'/api/admin/login',{method:'POST',body:{username:'admin',password:'test-fixture-password'}});assert.equal(r.status,200);assert.match(r.headers.get('set-cookie'),/Secure; HttpOnly; SameSite=Strict/);return r.headers.get('set-cookie').split(';')[0];}
 const event={title:'測試聚會',weekday:4,category:'學生聚會',start_time:'19:30',end_time:'21:00',location:'測試地點',notes:'公開補充資料'};
 const notice={title:'通告測試',start_date:'2099-11-10',end_date:'2099-11-30',content:'內容',category:'學生聚會'};
+
+test('logout clears expired or missing cookies but reports authentication service failures',async()=>{
+ const {env}=setup();
+ let r=await call(env,'/api/admin/logout',{method:'POST',body:{}});
+ assert.equal(r.status,200);assert.match(r.headers.get('set-cookie'),/Max-Age=0/);
+ const cookie='__Host-weekly-session='+'a'.repeat(64);
+ env.AUTH_SERVICE={fetch:async()=>new Response('',{status:401})};
+ r=await call(env,'/api/admin/logout',{method:'POST',body:{},cookie});
+ assert.equal(r.status,200);assert.match(r.headers.get('set-cookie'),/Max-Age=0/);
+ env.AUTH_SERVICE={fetch:async()=>new Response('',{status:503})};
+ r=await call(env,'/api/admin/logout',{method:'POST',body:{},cookie});
+ assert.equal(r.status,503);assert.equal(r.headers.get('set-cookie'),null);
+});
 test('public API works without Supabase; no credential or internal tables exposed',async()=>{const {env}=setup();const r=await call(env,'/api/public');assert.equal(r.status,200);const data=await r.json();assert.equal(data.weekly_categories.length,8);assert.deepEqual(data.weekly_events,[]);assert.equal(data.migration_pending,true);assert.equal('login_attempts' in data,false);assert.equal((await call(env,'/api/admin/export')).status,401);});
 test('session authorization, CSRF rejection, logout and remote revocation',async()=>{const {env}=setup();assert.equal((await call(env,'/api/admin/weekly_events',{method:'POST',body:event})).status,401);assert.equal((await call(env,'/api/admin/login',{method:'POST',body:{},origin:'https://evil.example'})).status,403);const cookie=await login(env);assert.equal((await (await call(env,'/api/admin/session',{cookie})).json()).authenticated,true);await call(env,'/api/admin/logout',{method:'POST',cookie,body:{}});assert.equal((await call(env,'/api/admin/data',{cookie})).status,401);});
 test('weekly CRUD and category rename cascade; prevent deletion of in-use category',async()=>{const {env}=setup(),cookie=await login(env);let r=await call(env,'/api/admin/weekly_events',{method:'POST',cookie,body:event});assert.equal(r.status,201);const id=(await r.json()).data.id;r=await call(env,'/api/admin/weekly_categories/'+encodeURIComponent('學生聚會'),{method:'PUT',cookie,body:{name:'學生',color:'#123456',bg:'#ffffff'}});assert.equal(r.status,200);const data=await (await call(env,'/api/public')).json();assert.equal(data.weekly_events[0].category,'學生');assert.equal((await call(env,'/api/admin/weekly_categories/'+encodeURIComponent('學生'),{method:'DELETE',cookie})).status,409);assert.equal((await call(env,'/api/admin/weekly_events/'+id,{method:'PUT',cookie,body:{title:'已更新'}})).status,200);assert.equal((await call(env,'/api/admin/weekly_events/'+id,{method:'DELETE',cookie})).status,200);assert.equal((await (await call(env,'/api/public')).json()).weekly_events.length,0);});

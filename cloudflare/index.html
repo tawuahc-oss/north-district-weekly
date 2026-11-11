@@ -322,6 +322,8 @@ let notices=[];
 let session=null;
 let selected=new Set(CATEGORIES);
 let loading=false;
+let loadTask=null;
+let authRevision=0;
 let noticeSortable=null;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -418,8 +420,17 @@ function renderNotices(){
   renderNoticeAdmin();
 }
 
-async function load(){
-  if(loading)return;
+function load(){
+  if(loadTask)return loadTask;
+  loadTask=loadData().finally(()=>{loadTask=null;});
+  return loadTask;
+}
+async function refreshAfterAuthChange(){
+  if(loadTask)await loadTask;
+  await load();
+}
+async function loadData(){
+  const revision=authRevision;
   loading=true;
   const btn=$("refreshBtn");
   btn.disabled=true;
@@ -438,9 +449,14 @@ async function load(){
       publicData.stale=true;
     }
     migrationMessage(publicData.migration_pending);
-    try{await syncSession();}catch{session=null;$("adminPanel").classList.remove("open");}
+    try{await syncSession(revision);}catch{if(revision===authRevision)applySession(null);}
+    if(revision!==authRevision)return;
     let source=publicData;
-    if(session)source=await api('/api/admin/data');
+    if(session){
+      try{source=await api('/api/admin/data');}
+      catch(error){if(error.status!==401)throw error;if(revision===authRevision)applySession(null);}
+    }
+    if(revision!==authRevision)return;
     const wr={data:source.weekly_events},nr={data:source.monthly_announcements},cr={data:source.weekly_categories};
     if(!cr.error){
       const previous = CATEGORIES;
@@ -473,14 +489,24 @@ async function load(){
   }
 }
 
-async function syncSession(){
-  if(!db)return;
-  const result=await db.auth.getSession();
-  session=result.data.session;
+function applySession(value){
+  session=value;
   const isAdmin=!!session&&session.user.id===ADMIN_UID;
   $("adminPanel").classList.toggle("open",isAdmin);
   $("loginBtn").setAttribute("aria-label",isAdmin?"管理員已登入":"管理員登入");
   $("loginBtn").title=isAdmin?"管理員已登入":"管理員登入";
+  if(!isAdmin){
+    $("weeklyAdminList").replaceChildren();$("announcementAdminList").replaceChildren();
+    if(noticeSortable){noticeSortable.destroy();noticeSortable=null;}
+    resetW();resetA();$("categoryEditor").reset();
+  }
+}
+async function syncSession(revision=authRevision){
+  if(!db)return;
+  const result=await db.auth.getSession();
+  if(revision!==authRevision)return;
+  applySession(result.data.session);
+  const isAdmin=!!session&&session.user.id===ADMIN_UID;
   if(isAdmin){renderWeeklyAdmin();renderNoticeAdmin();}
 }
 
@@ -605,16 +631,19 @@ $("loginForm").onsubmit=async e=>{
   if(r.error){msg("loginStatus",r.error.message||"登入失敗，請檢查登入資料。",true);return;}
   if(r.data.user.id!==ADMIN_UID){await db.auth.signOut();msg("loginStatus","此帳戶沒有管理員權限。",true);return;}
   $("loginBox").classList.remove("open");$("loginPassword").value="";
-  await load();msg("globalStatus","管理員登入成功。");
+  authRevision++;
+  await refreshAfterAuthChange();
+  if(!session){msg("globalStatus","登入狀態未能確認，請重新整理後再試。",true);return;}
+  msg("globalStatus","管理員登入成功。");
   $("adminPanel").scrollIntoView({behavior:"smooth"});
 };
 
 $("logoutBtn").onclick=async()=>{
-  if(db)await db.auth.signOut();
-  session=null;$("adminPanel").classList.remove("open");
-  $("loginBtn").setAttribute("aria-label","管理員登入");
-  $("loginBtn").title="管理員登入";
-  await load();msg("globalStatus","已登出。");
+  try{
+    if(db)await db.auth.signOut();
+    authRevision++;applySession(null);
+    await refreshAfterAuthChange();msg("globalStatus","已登出。");
+  }catch(error){msg("globalStatus","未能確認登出成功："+error.message,true);}
 };
 
 function fillCategoryEditor(){
@@ -668,8 +697,11 @@ categorySelect("weeklyCategory");
 categorySelect("announcementCategory",true);
 filters();
 load();
-setInterval(()=>{if(!document.hidden)load();},60000);
-document.addEventListener("visibilitychange",()=>{if(!document.hidden)load();});
+function refreshWhenIdle(){
+  if(!document.hidden&&!document.querySelector('#adminPanel.open,#loginBox.open'))load();
+}
+setInterval(refreshWhenIdle,60000);
+document.addEventListener("visibilitychange",refreshWhenIdle);
 </script>
 </body>
 </html>

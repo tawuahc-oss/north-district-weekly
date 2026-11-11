@@ -79,10 +79,18 @@ export default {
     return json({authenticated:true},200,{'Set-Cookie':cookie(result.token,28800)});
    }
    if(!path.startsWith('/api/admin/'))return json({error:'找不到此功能'},404);
+   // An expired or already revoked session must still be removable from this browser.
+   if(path==='/api/admin/logout'&&method==='POST'){
+    const token=tokenOf(request);
+    if(token){
+     const result=await calendar(env,'/api/admin/logout',{method:'POST',headers:{Authorization:'Bearer '+token}});
+     if(!result.ok&&result.status!==401)fail('登出服務暫時未能連線，請稍後再試。',503);
+    }
+    return json({success:true},200,{'Set-Cookie':cookie('',0)});
+   }
    const auth=await authorized(request,env);
    if(path==='/api/admin/session'&&method==='GET')return json({authenticated:auth});
    if(!auth)fail('請先以管理員帳戶登入。',401);
-   if(path==='/api/admin/logout'&&method==='POST'){await calendar(env,'/api/admin/logout',{method:'POST',headers:{Authorization:'Bearer '+tokenOf(request)}});return json({success:true},200,{'Set-Cookie':cookie('',0)});}
    if(path==='/api/admin/data'&&method==='GET')return json(await data(env,true));
    if(path==='/api/admin/export'&&method==='GET')return json({format:'nds-weekly-v1',exported_at:new Date().toISOString(),data:await data(env,true)});
    if(path==='/api/admin/confirm-migration'&&method==='POST'){await env.DB.prepare("UPDATE settings SET value='0' WHERE key='migration_pending'").run();return json({success:true});}
