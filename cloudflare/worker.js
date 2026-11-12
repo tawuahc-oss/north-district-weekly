@@ -1,3 +1,4 @@
+import {withPublicBackup} from './public-backup.js';
 const TABLES=['weekly_events','monthly_announcements','weekly_categories'];
 const COOKIE='__Host-weekly-session';
 const calURL='https://nds-cal.tawuahc.workers.dev';
@@ -53,7 +54,7 @@ async function save(env,table,input,id,original){
  else {if(table!=='weekly_categories')clean.id=crypto.randomUUID();statement=env.DB.prepare(`INSERT INTO ${table} (${Object.keys(clean).join(',')}) VALUES (${Object.keys(clean).map(()=>'?').join(',')}) RETURNING *`).bind(...Object.values(clean));}
  return (await statement.all()).results[0];
 }
-export default {
+const weeklyWorker = {
  async fetch(request,env,ctx){
   const url=new URL(request.url),path=url.pathname,method=request.method;
   const json=(value,status=200,extra={})=>new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...extra}});
@@ -62,9 +63,7 @@ export default {
    if(!['GET','HEAD'].includes(method)&&request.headers.get('Origin')!==url.origin)fail('請從週刊網站操作',403);
    if(path==='/api/health'&&method==='GET'){await env.DB.prepare('SELECT 1').first();return json({status:'online',database:'connected',project:'nds-weekly'});}
    if(path==='/api/public'&&method==='GET'){
-    const cache=globalThis.caches?.default,key=new Request(url.origin+'/api/public-snapshot');
-    try{const result=await data(env);if(cache&&ctx)ctx.waitUntil(cache.put(key,new Response(JSON.stringify(result),{headers:{'Cache-Control':'max-age=21600','Content-Type':'application/json'}})));return json(result);}
-    catch(e){const cached=cache&&await cache.match(key);if(cached){const result=await cached.json();return json({...result,stale:true});}throw e;}
+    return json(await data(env));
    }
    if(path==='/api/admin/login'&&method==='POST'){
     const input=await body(request);if(typeof input.username!=='string'||typeof input.password!=='string'||input.username.length>100||input.password.length>128)fail('登入資料不正確',401);
@@ -132,10 +131,12 @@ export default {
    }
    return json({error:'找不到此功能'},404);
   }catch(error){
-   if(!error.status)console.error("weekly_api_failure",error.name,error.message);
+   if(!error.status)console.error('weekly_api_failure',error.name,error.message);
    if(/FOREIGN KEY/i.test(error.message))return json({error:'仍有聚會或通告使用此分類，或指定分類不存在。',code:'23503'},409);
    if(/UNIQUE constraint/i.test(error.message))return json({error:'此分類名稱已存在。',code:'23505'},409);
    return json({error:error.status?error.message:'服務暫時未能完成操作，請稍後再試。'},error.status||503);
   }
  }
 };
+
+export default withPublicBackup(weeklyWorker,{prefix:'weekly:',publicPath:path=>path==='/api/public',keys:()=>['public'],warmKeys:()=>['public'],snapshot:env=>data(env),restore:backups=>({...backups[0],monthly_announcements:backups[0].monthly_announcements.filter(row=>(!row.publish_date||row.publish_date<=today())&&(row.end_date||row.start_date)>=today())})});

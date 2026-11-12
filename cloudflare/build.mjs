@@ -1,5 +1,6 @@
 import {mkdir,copyFile,readFile,writeFile} from 'node:fs/promises';
 import {Script} from 'node:vm';
+import {buildOfflineWorker} from './offline-sw.mjs';
 const root=new URL('./',import.meta.url);
 await mkdir(new URL('public/vendor/',root),{recursive:true});
 const html=await readFile(new URL('index.html',root),'utf8');
@@ -15,3 +16,4 @@ await writeFile(new URL('public/_headers',root),`/*
   Cache-Control: no-cache
 `);
 console.log('Weekly public assets built; inline JavaScript syntax checked.');
+await buildOfflineWorker(new URL('public/',root),['./index.html','./manifest.webmanifest','./weekly-icon-48.png','./weekly-icon-180.png','./vendor/Sortable.min.js'],'weekly',['/api/public']);

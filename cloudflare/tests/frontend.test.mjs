@@ -57,7 +57,7 @@ test('auth transitions wait for an old load then fetch a fresh session and datas
 
 test('background refresh does not reset forms while an admin or login panel is open',()=>{
   let calls=0;
-  const context={document:{hidden:false,querySelector:()=>({})},load:()=>{calls++;}};
+  const context={document:{hidden:false,querySelector:()=>({})},navigator:{},load:()=>{calls++;}};
   vm.createContext(context);
   vm.runInContext(html.slice(html.indexOf('function refreshWhenIdle(){'),html.indexOf('setInterval(refreshWhenIdle')),context);
   context.refreshWhenIdle();assert.equal(calls,0);
