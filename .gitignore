@@ -6,3 +6,6 @@ cloudflare/.wrangler/
 *.png
 !weekly-icon-*.png
 !cloudflare/weekly-icon-*.png
+
+pages-dist/
+!calendar-backup/assets/icons/*.png

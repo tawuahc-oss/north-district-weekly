@@ -5,7 +5,9 @@
   "scripts": {
     "test": "node --test cloudflare/tests/*.test.mjs",
     "build": "node cloudflare/build.mjs",
-    "deploy": "npm test && npm run build && wrangler deploy --config cloudflare/wrangler.jsonc --keep-vars"
+    "deploy": "npm test && npm run build && wrangler deploy --config cloudflare/wrangler.jsonc --keep-vars",
+    "backup:public": "node scripts/update-calendar-backup.mjs",
+    "test:backup": "node --test scripts/calendar-backup.test.mjs"
   },
   "devDependencies": {
     "wrangler": "4.156.0"

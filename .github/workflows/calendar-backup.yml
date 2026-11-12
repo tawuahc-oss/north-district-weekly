@@ -1,0 +1,40 @@
+name: Public calendar backup and Pages
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 19 * * *'
+  push:
+    branches: [main]
+    paths: ['calendar-backup/**', 'scripts/**', '.github/workflows/calendar-backup.yml', 'index.html']
+permissions:
+  contents: read
+concurrency:
+  group: public-backup-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - run: node --test scripts/calendar-backup.test.mjs
+      - name: Fetch and validate public calendar; failed source preserves last deployment
+        run: node scripts/update-calendar-backup.mjs
+      - run: node scripts/package-backup-pages.mjs
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: pages-dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment
