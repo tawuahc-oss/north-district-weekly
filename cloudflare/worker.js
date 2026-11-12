@@ -69,13 +69,14 @@ export default {
    if(path==='/api/admin/login'&&method==='POST'){
     const input=await body(request);if(typeof input.username!=='string'||typeof input.password!=='string'||input.username.length>100||input.password.length>128)fail('登入資料不正確',401);
     const ip=await digest(request.headers.get('CF-Connecting-IP')||'unknown'),now=Math.floor(Date.now()/1000);
+    const prefix=ip+':';
     await env.DB.prepare('DELETE FROM login_attempts WHERE attempted_at<?').bind(now-900).run();
-    const reserve=await env.DB.prepare('INSERT INTO login_attempts(id,attempted_at) SELECT ?,? WHERE (SELECT count(*) FROM login_attempts WHERE id LIKE ?) < 5').bind(ip+':'+crypto.randomUUID(),now,ip+':%').run();
+    const reserve=await env.DB.prepare('INSERT INTO login_attempts(id,attempted_at) SELECT ?,? WHERE (SELECT count(*) FROM login_attempts WHERE substr(id,1,length(?3))=?3) < 5').bind(prefix+crypto.randomUUID(),now,prefix).run();
     if(!reserve.meta.changes)fail('嘗試次數過多，請在 15 分鐘後再試。',429);
     const response=await calendar(env,'/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)});
     if(!response.ok)fail(response.status===401?'使用者名稱或密碼不正確。':'登入服務暫時未能使用，請稍後再試。',response.status===401?401:503);
     const result=await response.json();if(!/^[a-f0-9]{64}$/.test(result.token))fail('登入服務回應異常',503);
-    await env.DB.prepare('DELETE FROM login_attempts WHERE id LIKE ?').bind(ip+':%').run();
+    await env.DB.prepare('DELETE FROM login_attempts WHERE substr(id,1,length(?1))=?1').bind(prefix).run();
     return json({authenticated:true},200,{'Set-Cookie':cookie(result.token,28800)});
    }
    if(!path.startsWith('/api/admin/'))return json({error:'找不到此功能'},404);
@@ -131,6 +132,7 @@ export default {
    }
    return json({error:'找不到此功能'},404);
   }catch(error){
+   if(!error.status)console.error("weekly_api_failure",error.name,error.message);
    if(/FOREIGN KEY/i.test(error.message))return json({error:'仍有聚會或通告使用此分類，或指定分類不存在。',code:'23503'},409);
    if(/UNIQUE constraint/i.test(error.message))return json({error:'此分類名稱已存在。',code:'23505'},409);
    return json({error:error.status?error.message:'服務暫時未能完成操作，請稍後再試。'},error.status||503);

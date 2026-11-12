@@ -29,3 +29,20 @@ test('backup restore atomic and repeatable; export omits all credentials',async(
 test('retention requires backup confirmation and only deletes ended old notices',async()=>{const {env}=setup(),cookie=await login(env);await call(env,'/api/admin/weekly_events',{method:'POST',cookie,body:event});await call(env,'/api/admin/monthly_announcements',{method:'POST',cookie,body:{...notice,start_date:'2020-01-01',end_date:null}});await call(env,'/api/admin/monthly_announcements',{method:'POST',cookie,body:notice});assert.equal((await call(env,'/api/admin/retention',{method:'POST',cookie,body:{}})).status,400);const result=await (await call(env,'/api/admin/retention',{method:'POST',cookie,body:{backup_downloaded:true}})).json();assert.equal(result.deleted,1);const data=await (await call(env,'/api/admin/data',{cookie})).json();assert.equal(data.weekly_events.length,1);assert.equal(data.monthly_announcements.length,1);});
 test('login limits reserve failed attempts before contacting auth service',async()=>{const {env}=setup();for(let i=0;i<5;i++)assert.equal((await call(env,'/api/admin/login',{method:'POST',body:{username:'admin',password:'wrong'}})).status,401);assert.equal((await call(env,'/api/admin/login',{method:'POST',body:{username:'admin',password:'wrong'}})).status,429);});
 test('large backups restore using only three table statements and support numeric legacy IDs',async()=>{const {env}=setup(),cookie=await login(env);const input={weekly_categories:[],weekly_events:Array.from({length:120},(_,id)=>({...event,id})),monthly_announcements:[]};const result=await call(env,'/api/admin/import',{method:'POST',cookie,body:input});assert.equal(result.status,200);assert.equal((await result.json()).imported,120);assert.equal((await (await call(env,'/api/admin/data',{cookie})).json()).weekly_events.length,120);});
+
+test('login works with the production D1 LIKE pattern limit', async()=>{
+ const {env}=setup();
+ const prepare=env.DB.prepare.bind(env.DB);
+ env.DB.prepare=sql=>{
+  const statement=prepare(sql);
+  if(!/LIKE/i.test(sql))return statement;
+  return {bind(...values){
+   if(values.some(value=>typeof value==='string'&&value.length>50)){
+    throw Error('D1_ERROR: LIKE or GLOB pattern too complex: SQLITE_ERROR');
+   }
+   return statement.bind(...values);
+  }};
+ };
+ await login(env);
+ assert.equal((await call(env,'/api/admin/login',{method:'POST',body:{username:'admin',password:'wrong'}})).status,401);
+});
