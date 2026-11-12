@@ -292,7 +292,7 @@ function categoryStyle(category){
 }
 const DAYS = ["星期日","星期一","星期二","星期三","星期四","星期五","星期六"];
 async function api(path,options={}){
-  const response=await fetch(path,{...options,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json',...options.headers}});
+  const response=await fetch(path,{...options,...(!options.method||options.method==='GET'?{signal:AbortSignal.timeout(12000)}:{}),credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json',...options.headers}});
   const result=await response.json();
   if(!response.ok)throw Object.assign(new Error(result.error||'連線失敗，請稍後再試。'),{code:result.code,status:response.status});
   return result;
@@ -323,6 +323,7 @@ let session=null;
 let selected=new Set(CATEGORIES);
 let loading=false;
 let loadTask=null;
+let readOnly=false;
 let authRevision=0;
 let noticeSortable=null;
 const $=id=>document.getElementById(id);
@@ -448,13 +449,14 @@ async function loadData(){
       if(!publicData)throw error;
       publicData.stale=true;
     }
+    readOnly=!!publicData.stale;
     migrationMessage(publicData.migration_pending);
-    try{await syncSession(revision);}catch{if(revision===authRevision)applySession(null);}
+    try{await syncSession(revision);}catch{if(revision===authRevision){readOnly=true;applySession(null);}}
     if(revision!==authRevision)return;
     let source=publicData;
-    if(session){
+    if(session&&!readOnly){
       try{source=await api('/api/admin/data');}
-      catch(error){if(error.status!==401)throw error;if(revision===authRevision)applySession(null);}
+      catch(error){if(error.status&&error.status<500&&error.status!==401)throw error;if(revision===authRevision){readOnly=error.status!==401;applySession(null);}}
     }
     if(revision!==authRevision)return;
     const wr={data:source.weekly_events},nr={data:source.monthly_announcements},cr={data:source.weekly_categories};
@@ -474,9 +476,9 @@ async function loadData(){
     }
     weekly=wr.data||[];
     notices=nr.data||[];
-    msg("globalStatus",publicData.stale?"顯示上次資料":"已更新");
-    $("cacheNotice").hidden=!publicData.stale;
-    $("cacheNotice").textContent=publicData.stale?"目前連線不穩，顯示 "+new Date(publicData.updated_at).toLocaleString("zh-HK")+" 的資料。":"";
+    msg("globalStatus",readOnly?"唯讀備份":"已更新");
+    $("cacheNotice").hidden=!readOnly;
+    $("cacheNotice").textContent=readOnly?"目前為唯讀模式，顯示最近保存的公開資料（"+new Date(publicData.backup_saved_at||publicData.updated_at).toLocaleString("zh-HK",{timeZone:"Asia/Hong_Kong"})+"）。服務恢復後可重新登入及編輯。":"";
     renderWeekly();
     renderNotices();
   }catch(error){
@@ -491,7 +493,8 @@ async function loadData(){
 
 function applySession(value){
   session=value;
-  const isAdmin=!!session&&session.user.id===ADMIN_UID;
+  $("loginBtn").disabled=readOnly;
+  const isAdmin=!!session&&session.user.id===ADMIN_UID&&!readOnly;
   $("adminPanel").classList.toggle("open",isAdmin);
   $("loginBtn").setAttribute("aria-label",isAdmin?"管理員已登入":"管理員登入");
   $("loginBtn").title=isAdmin?"管理員已登入":"管理員登入";
@@ -506,7 +509,7 @@ async function syncSession(revision=authRevision){
   const result=await db.auth.getSession();
   if(revision!==authRevision)return;
   applySession(result.data.session);
-  const isAdmin=!!session&&session.user.id===ADMIN_UID;
+  const isAdmin=!!session&&session.user.id===ADMIN_UID&&!readOnly;
   if(isAdmin){renderWeeklyAdmin();renderNoticeAdmin();}
 }
 
@@ -700,6 +703,7 @@ load();
 function refreshWhenIdle(){
   if(!document.hidden&&!document.querySelector('#adminPanel.open,#loginBox.open'))load();
 }
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 setInterval(refreshWhenIdle,60000);
 document.addEventListener("visibilitychange",refreshWhenIdle);
 </script>

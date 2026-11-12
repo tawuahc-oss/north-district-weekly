@@ -1,11 +1,35 @@
 {
- "name":"nds-weekly",
- "main":"worker.js",
- "account_id":"fe1b88023b1c1ee8426991f924fc0e25",
- "compatibility_date":"2026-11-11",
- "workers_dev":true,
- "preview_urls":false,
- "services":[{"binding":"AUTH_SERVICE","service":"nds-cal"}],
- "assets":{"directory":"./public","binding":"ASSETS","run_worker_first":["/api/*"]},
- "d1_databases":[{"binding":"DB","database_name":"nds-weekly","database_id":"91196059-4c7e-4b5c-b127-b72bbdb7df65","migrations_dir":"migrations"}]
+  "name": "nds-weekly",
+  "main": "worker.js",
+  "account_id": "fe1b88023b1c1ee8426991f924fc0e25",
+  "compatibility_date": "2026-11-11",
+  "workers_dev": true,
+  "preview_urls": false,
+  "services": [
+    {
+      "binding": "AUTH_SERVICE",
+      "service": "nds-cal"
+    }
+  ],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nds-weekly",
+      "database_id": "91196059-4c7e-4b5c-b127-b72bbdb7df65",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "PUBLIC_BACKUPS",
+      "id": "89ec6f7303804d1c81bf95dd3abc8567"
+    }
+  ]
 }
